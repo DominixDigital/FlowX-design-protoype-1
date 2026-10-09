@@ -1,154 +1,177 @@
-/* FlowX design tokens.
-   Three surface modes share one token vocabulary:
-   chalk     — everyday operational work (default)
-   floodlit  — AI (Huddle) and performance insight
-   matchday  — identity moments: onboarding, passport header, report cover, milestones */
+/* ditdit design tokens.
+
+   Five approved colours, each kept exactly at its 500 step:
+     teal     #36ABB4  coach-facing primary (coach, head coach, assistant, management web)
+     lime     #BEE501  parent-facing primary
+     grey     #CCCCCC  athlete-facing primary
+     charcoal #2C2A2B  shared foundation (type, dark surfaces, companion, Dit Score)
+     taupe    #7B7165  shared secondary neutral
+   Scales are interpolated in OKLab toward white (50–400) and toward deep shades (600–900).
+
+   Two axes, set independently on any subtree:
+     data-role  = coach | parent | athlete   → which colour family the role tokens resolve to
+     data-theme = chalk | floodlit | matchday → surface mode (light operational, charcoal immersive, editorial) */
 
 :root {
-  /* Raw palette */
-  --ink-950: #0b130f;
-  --ink-900: #111c17;
-  --ink-800: #1a2721;
-  --ink-700: #26362e;
-  --ink-600: #3a4b42;
-  --forest-800: #0f3324;
-  --forest-700: #14432f;
-  --forest-600: #1b5a3f;
-  --forest-500: #247352;
-  --lime-500: #c6f224;
-  --lime-400: #d7ff3c;
-  --lime-200: #effcb8;
-  --chalk-0: #fbfcf8;
-  --chalk-50: #f5f6f0;
-  --chalk-100: #eceee4;
-  --chalk-200: #dfe3d5;
-  --chalk-300: #c9cfbf;
-  --slate-600: #4f5a53;
-  --slate-500: #5d6862;
-  --slate-400: #919c95;
-  --slate-300: #b5beb8;
-  --court-900: #0a1a36;
-  --court-800: #0f2a57;
-  --court-600: #1f4fb8;
-  --court-500: #3b74e0;
-  --court-300: #9dbcf5;
+  /* ── Raw scales (generated, see docs/07-colour-system.md) ── */
+  --teal-50: #f1f8f9;  --teal-100: #ddedee; --teal-200: #b9dee1; --teal-300: #93cdd2; --teal-400: #6abcc3;
+  --teal-500: #36abb4; --teal-600: #218c93; --teal-700: #086d74; --teal-800: #005156; --teal-900: #00353a;
 
-  /* Semantic (accessible on chalk) */
-  --ok: #176b3e;
-  --ok-bg: #dcf1e3;
-  --warn: #8a5a00;
+  --lime-50: #f5f9ed;  --lime-100: #eef6dc; --lime-200: #e2f3b8; --lime-300: #d5ef90; --lime-400: #c9ea62;
+  --lime-500: #bee501; --lime-600: #99bb00; --lime-700: #769200; --lime-800: #546b00; --lime-900: #354600;
+
+  --grey-50: #f7f7f7;  --grey-100: #f1f1f1; --grey-200: #e8e8e8; --grey-300: #dfdfdf; --grey-400: #d5d5d5;
+  --grey-500: #cccccc; --grey-600: #a6a6a6; --grey-700: #818181; --grey-800: #5e5e5e; --grey-900: #3d3d3d;
+
+  --taupe-50: #f7f6f5;  --taupe-100: #e5e3e1; --taupe-200: #cbc7c2; --taupe-300: #b0a9a2; --taupe-400: #958d83;
+  --taupe-500: #7b7165; --taupe-600: #645b51; --taupe-700: #4e463e; --taupe-800: #39332b; --taupe-900: #25201a;
+
+  --char-50: #f7f7f7;  --char-100: #d7d7d7; --char-200: #acabab; --char-300: #7e7d7d; --char-400: #535152;
+  --char-500: #2c2a2b; --char-600: #232122; --char-700: #1a1819; --char-800: #111011; --char-900: #090809;
+
+  --paper: #ffffff;
+
+  /* ── Semantic status (accessible on light surfaces; dark variants under floodlit) ── */
+  --ok: #546b00;       /* lime-800: success stays inside the palette */
+  --ok-bg: #eef6dc;
+  --warn: #8a5a00;     /* amber is a functional exception: needed to tell warning from success */
   --warn-bg: #fbecc8;
-  --err: #b42f2f;
+  --err: #b42f2f;      /* functional exception: errors must read as errors */
   --err-bg: #f8dcdc;
-  --info: #1f4fb8;
-  --info-bg: #dce6fa;
+  --info: #086d74;     /* teal-700 */
+  --info-bg: #ddedee;
 
-  /* Type */
+  /* ── Type ── */
   --font-display: 'Big Shoulders Display', 'Arial Narrow', 'Roboto Condensed', sans-serif;
   --font-body: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
-  --fs-xs: 0.75rem;   /* 12 */
-  --fs-sm: 0.875rem;  /* 14 */
-  --fs-md: 1rem;      /* 16 */
-  --fs-lg: 1.125rem;  /* 18 */
-  --fs-xl: 1.375rem;  /* 22 */
-  --fs-2xl: 1.75rem;  /* 28 — display */
-  --fs-3xl: 2.5rem;   /* 40 — display */
-  --fs-4xl: 3.5rem;   /* 56 — display */
-  --fs-5xl: 5.5rem;   /* 88 — display numerals */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: 2.5rem;
+  --fs-4xl: 3.5rem;
+  --fs-5xl: 5.5rem;
 
-  /* Space: 4px scale */
-  --s-1: 4px;
-  --s-2: 8px;
-  --s-3: 12px;
-  --s-4: 16px;
-  --s-5: 20px;
-  --s-6: 24px;
-  --s-8: 32px;
-  --s-10: 40px;
-  --s-12: 48px;
-  --s-16: 64px;
+  /* ── Space: 4px scale ── */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px;
+  --s-8: 32px; --s-10: 40px; --s-12: 48px; --s-16: 64px;
 
-  /* Radii: tight for data, generous only for sheets/plates */
-  --r-xs: 4px;
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  /* ── Radii: tight for data, generous only for sheets/plates ── */
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 20px; --r-xl: 28px;
 
-  /* Motion */
+  /* ── Motion ── */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   --t-fast: 140ms;
   --t-base: 220ms;
   --t-slow: 420ms;
-
-  --focus-ring: 0 0 0 3px var(--chalk-0), 0 0 0 5px var(--court-600);
 }
 
-/* Theme: chalk (default operational surface) */
+/* ───────────── Role families ─────────────
+   Components only ever reference --role-*, --hl*, never a raw family. */
+:root,
+[data-role='coach'] {
+  --role-50: var(--teal-50);   --role-100: var(--teal-100); --role-200: var(--teal-200); --role-300: var(--teal-300);
+  --role-400: var(--teal-400); --role-500: var(--teal-500); --role-600: var(--teal-600); --role-700: var(--teal-700);
+  --role-800: var(--teal-800); --role-900: var(--teal-900);
+  --role-text: var(--teal-700);  /* accessible role-coloured text on light */
+  --hl: var(--teal-500);         /* highlight fill; always carries charcoal text */
+  --hl-soft: var(--teal-100);
+  --hl-ink: var(--char-500);
+  --role-name: 'coach';
+}
+[data-role='parent'] {
+  --role-50: var(--lime-50);   --role-100: var(--lime-100); --role-200: var(--lime-200); --role-300: var(--lime-300);
+  --role-400: var(--lime-400); --role-500: var(--lime-500); --role-600: var(--lime-600); --role-700: var(--lime-700);
+  --role-800: var(--lime-800); --role-900: var(--lime-900);
+  --role-text: var(--lime-800);
+  --hl: var(--lime-500);
+  --hl-soft: var(--lime-100);
+  --hl-ink: var(--char-500);
+}
+[data-role='athlete'] {
+  --role-50: var(--grey-50);   --role-100: var(--grey-100); --role-200: var(--grey-200); --role-300: var(--grey-300);
+  --role-400: var(--grey-400); --role-500: var(--grey-500); --role-600: var(--grey-600); --role-700: var(--grey-700);
+  --role-800: var(--grey-800); --role-900: var(--grey-900);
+  --role-text: var(--grey-800);
+  --hl: var(--grey-500);       /* silver: energy comes from contrast with charcoal, not hue */
+  --hl-soft: var(--grey-200);
+  --hl-ink: var(--char-500);
+}
+
+/* ───────────── Surface modes ───────────── */
+
+/* chalk: light operational surfaces, tinted by the role family */
 :root,
 [data-theme='chalk'] {
-  --bg: var(--chalk-100);
-  --surface: var(--chalk-0);
-  --surface-2: var(--chalk-50);
-  --surface-sunk: var(--chalk-200);
-  --text: var(--ink-900);
-  --text-muted: var(--slate-500);
-  --text-faint: #616c65;
-  --line: var(--chalk-300);
-  --line-strong: var(--ink-900);
-  --accent: var(--forest-700);
-  --accent-ink: var(--chalk-0);
-  --highlight: var(--lime-400);
-  --highlight-ink: var(--ink-900);
-  --shadow: 0 1px 0 rgba(17, 28, 23, 0.06), 0 8px 24px -16px rgba(17, 28, 23, 0.35);
+  --bg: var(--role-50);
+  --surface: var(--paper);
+  --surface-2: var(--role-50);
+  --surface-sunk: var(--role-100);
+  --text: var(--char-500);
+  --text-muted: var(--taupe-600);
+  --text-faint: var(--taupe-500);
+  --line: color-mix(in oklab, var(--role-200) 55%, var(--taupe-100));
+  --line-strong: var(--char-500);
+  --accent: var(--role-500);      /* primary action fill */
+  --accent-ink: var(--char-500);  /* text on primary action */
+  --shadow: 0 1px 0 rgba(44, 42, 43, 0.05), 0 10px 24px -18px rgba(44, 42, 43, 0.4);
+  --focus-ring: 0 0 0 3px var(--paper), 0 0 0 5px var(--char-500);
   color-scheme: light;
 }
 
+/* floodlit: charcoal immersive surfaces for the companion, Dit Score and the athlete app */
 [data-theme='floodlit'] {
-  --bg: var(--ink-950);
-  --surface: var(--ink-900);
-  --surface-2: var(--ink-800);
-  --surface-sunk: #070d0a;
-  --text: var(--chalk-50);
-  --text-muted: var(--slate-400);
-  --text-faint: #7d8b83;
-  --line: var(--ink-700);
-  --line-strong: var(--chalk-50);
-  --accent: var(--lime-400);
-  --accent-ink: var(--ink-950);
-  --highlight: var(--lime-400);
-  --highlight-ink: var(--ink-950);
+  --bg: var(--char-700);
+  --surface: var(--char-600);
+  --surface-2: var(--char-500);
+  --surface-sunk: var(--char-800);
+  --text: var(--grey-50);
+  --text-muted: var(--grey-600);
+  --text-faint: var(--grey-700);
+  --line: var(--char-400);
+  --line-strong: var(--grey-50);
+  --accent: var(--hl);
+  --accent-ink: var(--char-500);
   --shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.8);
-  --focus-ring: 0 0 0 3px var(--ink-950), 0 0 0 5px var(--lime-400);
-  --ok: #5fd08e;
-  --ok-bg: rgba(95, 208, 142, 0.14);
+  --focus-ring: 0 0 0 3px var(--char-700), 0 0 0 5px var(--hl);
+  --ok: var(--lime-500);
+  --ok-bg: rgba(190, 229, 1, 0.12);
   --warn: #f2c14e;
   --warn-bg: rgba(242, 193, 78, 0.14);
-  --err: #ff7a7a;
-  --err-bg: rgba(255, 122, 122, 0.14);
-  --info: var(--court-300);
-  --info-bg: rgba(157, 188, 245, 0.14);
+  --err: #ff8a8a;
+  --err-bg: rgba(255, 138, 138, 0.14);
+  --info: var(--teal-300);
+  --info-bg: rgba(54, 171, 180, 0.16);
   color-scheme: dark;
 }
 
+/* matchday: editorial identity moments — charcoal with warm taupe depth */
 [data-theme='matchday'] {
-  --bg: var(--court-900);
-  --surface: var(--court-800);
-  --surface-2: #143468;
-  --surface-sunk: #071228;
-  --text: var(--chalk-0);
-  --text-muted: var(--court-300);
-  --text-faint: #4f6c9e;
-  --line: #24447a;
-  --line-strong: var(--chalk-0);
-  --accent: var(--lime-400);
-  --accent-ink: var(--ink-950);
-  --highlight: var(--lime-400);
-  --highlight-ink: var(--ink-950);
+  --bg: var(--char-500);
+  --surface: var(--char-400);
+  --surface-2: var(--taupe-800);
+  --surface-sunk: var(--char-700);
+  --text: var(--paper);
+  --text-muted: var(--taupe-200);
+  --text-faint: var(--taupe-300);
+  --line: var(--taupe-700);
+  --line-strong: var(--paper);
+  --accent: var(--hl);
+  --accent-ink: var(--char-500);
   --shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.7);
-  --focus-ring: 0 0 0 3px var(--court-900), 0 0 0 5px var(--lime-400);
+  --focus-ring: 0 0 0 3px var(--char-500), 0 0 0 5px var(--hl);
   color-scheme: dark;
+}
+
+/* Athlete on light surfaces: silver can't carry an action, so the primary action is charcoal. */
+[data-theme='chalk'][data-role='athlete'] {
+  --accent: var(--char-500);
+  --accent-ink: var(--paper);
+  --hl: var(--grey-400);
 }
 
 /* Any themed subtree re-resolves text colour from its own tokens. */

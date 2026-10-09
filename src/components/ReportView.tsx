@@ -29,7 +29,7 @@ export function ReportView({ db, report, onPlayVideo }: { db: DB; report: Report
     <article className="stack gap-4" aria-label={`${first}’s ${report.period} report`}>
       <header className="clip" data-theme="matchday" style={{ aspectRatio: 'auto', minHeight: 190, borderRadius: 'var(--r-lg)', padding: 18, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         <PitchArt tone="court" />
-        <p className="xs" style={{ color: 'var(--court-300)', fontWeight: 650 }}>Progress report · {report.period}</p>
+        <p className="xs" style={{ color: 'var(--taupe-200)', fontWeight: 650 }}>Progress report · {report.period}</p>
         <h2 className="display" style={{ fontSize: '2.75rem', color: '#fff' }}>{a.name}</h2>
       </header>
 
@@ -46,7 +46,7 @@ export function ReportView({ db, report, onPlayVideo }: { db: DB; report: Report
       </section>
 
       {report.comment && (
-        <section className="card" style={{ borderLeft: '4px solid var(--forest-700)' }}>
+        <section className="card" style={{ borderLeft: '4px solid var(--role-700)' }}>
           <p className="xs strong muted">From the coach</p>
           <p style={{ marginTop: 6 }}>{report.comment}</p>
         </section>
@@ -61,17 +61,17 @@ export function ReportView({ db, report, onPlayVideo }: { db: DB; report: Report
           </div>
         )}
         {report.includes.milestone && ms && (
-          <div className="metric" style={{ background: 'var(--lime-400)', borderColor: 'var(--lime-400)', color: 'var(--ink-950)' }}>
+          <div className="metric" style={{ background: 'var(--hl)', borderColor: 'var(--hl)', color: 'var(--char-700)' }}>
             <span className="metric-label row gap-1"><Trophy size={14} /> Milestone</span>
             <span className="small strong">{ms.title}</span>
-            <span className="metric-basis" style={{ color: 'var(--ink-700)' }}>{fmtDate(ms.date, { day: 'numeric', month: 'long' })}</span>
+            <span className="metric-basis" style={{ color: 'var(--char-400)' }}>{fmtDate(ms.date, { day: 'numeric', month: 'long' })}</span>
           </div>
         )}
       </div>
 
       {report.includes.competition && comp && (
         <section className="card row gap-3" style={{ alignItems: 'flex-start' }}>
-          <Medal size={20} color="var(--court-600)" />
+          <Medal size={20} color="var(--role-700)" />
           <div className="grow">
             <p className="small strong">{comp.name}</p>
             <p className="xs muted">{fmtDate(comp.date, { weekday: 'short', day: 'numeric', month: 'short' })} · {comp.venue}</p>

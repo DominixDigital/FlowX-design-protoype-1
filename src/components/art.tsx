@@ -3,17 +3,17 @@ import { CloudOff, Play, RefreshCw, AlertTriangle, Ban, Clapperboard } from 'luc
 import type { Video } from '../data/types';
 import { fmtTime } from '../store/selectors';
 
-/** The FlowX motif: a pitch strip in perspective with a ball's flight line.
+/** The ditdit motif: a pitch strip in perspective with a ball's flight line.
  *  Stands in for photography until licensed sport imagery exists. */
 export function PitchArt({ tone = 'forest', flight = true }: { tone?: 'forest' | 'court' | 'ink'; flight?: boolean }) {
-  const bg = { forest: ['#14432f', '#0b2a1d'], court: ['#1f4fb8', '#0a1a36'], ink: ['#1a2721', '#0b130f'] }[tone];
+  const bg = { forest: ['var(--char-400)', 'var(--char-700)'], court: ['var(--taupe-700)', 'var(--char-700)'], ink: ['var(--char-500)', 'var(--char-800)'] }[tone];
   const gid = `pa-${tone}`;
   return (
     <svg className="clip-art" viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden>
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={bg[0]} />
-          <stop offset="1" stopColor={bg[1]} />
+          <stop offset="0" style={{ stopColor: bg[0] }} />
+          <stop offset="1" style={{ stopColor: bg[1] }} />
         </linearGradient>
       </defs>
       <rect width="400" height="225" fill={`url(#${gid})`} />
@@ -26,8 +26,8 @@ export function PitchArt({ tone = 'forest', flight = true }: { tone?: 'forest' |
       <path d="M196 44 V64 M200 44 V64 M204 44 V64" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" />
       {flight && (
         <>
-          <path d="M60 30 C 150 10, 230 60, 205 150" stroke="#d7ff3c" strokeWidth="2" fill="none" strokeDasharray="2 6" strokeLinecap="round" />
-          <circle cx="205" cy="150" r="5" fill="#d7ff3c" />
+          <path d="M60 30 C 150 10, 230 60, 205 150" style={{ stroke: 'var(--hl)' }} strokeWidth="2" fill="none" strokeDasharray="2 6" strokeLinecap="round" />
+          <circle cx="205" cy="150" r="5" style={{ fill: 'var(--hl)' }} />
         </>
       )}
     </svg>
@@ -53,7 +53,7 @@ export function Clip({ video, onPlay, compact }: { video: Video; onPlay?: () => 
   else if (video.upload === 'uploading') overlay = (
     <span className="stack gap-2" style={{ alignItems: 'center', width: '70%' }}>
       <RefreshCw size={20} />Uploading {video.progress}%
-      <span className="progress" style={{ width: '100%', background: 'rgba(255,255,255,.2)' }}><span style={{ width: `${video.progress}%`, background: 'var(--lime-400)' }} /></span>
+      <span className="progress" style={{ width: '100%', background: 'rgba(255,255,255,.2)' }}><span style={{ width: `${video.progress}%`, background: 'var(--hl)' }} /></span>
     </span>
   );
   else if (video.upload === 'failed') overlay = <span className="stack gap-1" style={{ alignItems: 'center' }}><AlertTriangle size={20} />Upload failed · clip kept on device</span>;

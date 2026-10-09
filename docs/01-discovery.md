@@ -1,10 +1,10 @@
-# FlowX — discovery summary
+# ditdit — discovery summary
 
 Sources read: `docs/context/00`–`05` and the context-pack README (copied from the uploads), plus the three reference images in `docs/reference-images/`.
 
-## What FlowX is
+## What ditdit is
 
-FlowX is an operating system for a sports academy. It runs the athlete-development loop:
+ditdit is an operating system for a sports academy. It runs the athlete-development loop:
 
 **set up → organise → plan development → run sessions → capture evidence → reassess → communicate → keep continuity**
 
@@ -67,9 +67,9 @@ The full traceable screen list is in [`02-screen-inventory.md`](02-screen-invent
 
 **Finding:** none of the 312 flows specifies an AI capability. The closest are `CM05.03` Voice Input ("if introduced"), `CM09.02` handover summary ("where possible"), `MW11.02` Pull Development Information, and `MW10.03` / `CM12.03` evidence review.
 
-So the AI layer, **Huddle**, attaches only to steps that already exist in the flows. It speeds up a step that already exists and never adds a new kind of decision:
+So the AI layer, **dit (companion)**, attaches only to steps that already exist in the flows. It speeds up a step that already exists and never adds a new kind of decision:
 
-| Huddle object | Anchored to | What it does | What stays human |
+| dit (companion) object | Anchored to | What it does | What stays human |
 |---|---|---|---|
 | **Voice → observation draft** | CM05.03, CM05.05, CM14.04 | Speech becomes a draft observation, with a suggested development-area link and an athlete match | The coach edits and saves; nothing saves on its own |
 | **Evidence brief** | CM12.02–04, MW10.03 | Lists the notes, attendance, videos and goal state since the last review, each linked to its source record | The status decision |
@@ -78,23 +78,23 @@ So the AI layer, **Huddle**, attaches only to steps that already exist in the fl
 | **Moment explainer** | AT04.04 | Expands a coach's timestamp comment into a practice cue | Shows only feedback that is already published |
 | **Handover summary** | CM09.02 | Summarises open work for the recipient | The sender confirms the recipient (CM09.04) |
 
-Trust rules for every Huddle object:
+Trust rules for every dit (companion) object:
 - It cites its basis: links to the source records.
 - It labels interpretation as **Suggestion**, never as fact.
 - Consequential actions go through a **Proposed action** card with Confirm / Edit / Dismiss.
 - AI-assisted records carry an "AI-drafted, coach-confirmed" mark in their history.
 
-**Prototype honesty:** no language model is connected. Huddle responses come from deterministic templates over the fixture records, and every one is labelled *Demo logic — no AI service connected*. Voice uses the browser's Web Speech API where it exists. Elsewhere it falls back to typing, plus a clearly labelled sample voice note.
+**Prototype honesty:** no language model is connected. dit (companion) responses come from deterministic templates over the fixture records, and every one is labelled *Demo logic — no AI service connected*. Voice uses the browser's Web Speech API where it exists. Elsewhere it falls back to typing, plus a clearly labelled sample voice note.
 
 ## Visual directions explored
 
-The same screen is rendered three ways at `#/explore`: Coach Mobile athlete context plus a voice-to-observation Huddle.
+The same screen is rendered three ways at `#/explore`: Coach Mobile athlete context plus a voice-to-observation dit (companion).
 
 - **A — Floodlit (Performance Lab):** ink background, lime glow, sculptural numbers, translucent layers.
 - **B — Matchday (Sports Editorial):** duotone photo plates, giant condensed type, deep court blue.
 - **C — Chalk (Functional Sports Intelligence):** chalk-white surfaces, forest ink, lime used like a highlighter.
 
-**Chosen synthesis:** C is the base for everyday work. A is reserved for Huddle and performance insight. B is used only at identity moments: onboarding, the passport header, the report cover and milestones. Details and the scoring are on the explore page and in [`03-design-system.md`](03-design-system.md).
+**Chosen synthesis:** C is the base for everyday work. A is reserved for dit (companion) and performance insight. B is used only at identity moments: onboarding, the passport header, the report cover and milestones. Details and the scoring are on the explore page and in [`03-design-system.md`](03-design-system.md).
 
 ## Gaps, inconsistencies and assumptions
 
@@ -108,7 +108,7 @@ The same screen is rendered three ways at `#/explore`: Coach Mobile athlete cont
 
 ## Implementation sequence
 
-1. Design tokens and the core components (Seam companion, Huddle objects, status badges, sync pill).
+1. Design tokens and the core components (Seam companion, dit (companion) objects, status badges, sync pill).
 2. Shared store: fixtures, an idempotent command queue, and simulation switches.
 3. Coach Mobile: courtside capture plus offline and conflict handling (journey 1).
 4. Coach Mobile, then Web: the development loop and reassessment (journey 2 / HC01–02).

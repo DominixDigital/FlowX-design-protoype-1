@@ -9,7 +9,8 @@ import {
 import type { Athlete, AthleteStatus } from '../../data/types';
 import { Avatar, Banner, Button, ConfirmDialog, Field, FlowCode, Metric, StatusBadge, StateBlock, Timeline } from '../../components/ui';
 import { Clip, PitchArt } from '../../components/art';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { DitChip } from '../../score/ScoreViz';
+import { useCompanionContext } from '../../companion/Companion';
 import { Drawer, PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -32,7 +33,7 @@ export function AthletesPage() {
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
   const [confirm, setConfirm] = useState<{ a: Athlete; action: 'archive' | 'reactivate' | 'transfer' } | null>(null);
-  useHuddleContext({ surface: 'web', title: 'Athletes', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'web', title: 'Athletes', prompts: ['What can you help with?'] });
 
   const list = db.athletes.filter((a) => (status === 'all' || a.status === status) && a.name.toLowerCase().includes(q.toLowerCase()));
   const counts = (s: AthleteStatus) => db.athletes.filter((a) => a.status === s).length;
@@ -252,7 +253,7 @@ export function Passport() {
   const a = athleteById(db, id);
   const [editing, setEditing] = useState(false);
   const [transfer, setTransfer] = useState(false);
-  useHuddleContext(a ? {
+  useCompanionContext(a ? {
     surface: 'web', title: `Passport · ${a.name}`, athleteId: a.id,
     prompts: ['Summarise recent sessions', 'Compare the last two sessions', 'Draft a report comment'],
   } : null);
@@ -268,11 +269,12 @@ export function Passport() {
       <header className="clip" data-theme="matchday" style={{ aspectRatio: 'auto', borderRadius: 'var(--r-lg)', padding: '28px 28px 22px', marginBottom: 24, display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 24, alignItems: 'end' }}>
         <PitchArt tone="court" />
         <div>
-          <p className="small" style={{ color: 'var(--court-300)' }}>{a.discipline} · {ageOn(a.born)} · {batchById(db, a.batchId)?.name ?? 'No batch'} · Primary coach {coachById(db, a.primaryCoachId)?.name ?? '—'}</p>
+          <p className="small" style={{ color: 'var(--taupe-200)' }}>{a.discipline} · {ageOn(a.born)} · {batchById(db, a.batchId)?.name ?? 'No batch'} · Primary coach {coachById(db, a.primaryCoachId)?.name ?? '—'}</p>
           <h1 className="display" style={{ fontSize: 'clamp(2.75rem, 6vw, 5rem)', color: '#fff' }}>{a.name}</h1>
-          {area && <p style={{ color: '#fff', marginTop: 8 }}>Current focus: <span style={{ background: 'var(--lime-400)', color: 'var(--ink-950)', padding: '1px 6px', borderRadius: 4, fontWeight: 650 }}>{area.title}</span></p>}
+          {area && <p style={{ color: '#fff', marginTop: 8 }}>Current focus: <span style={{ background: 'var(--hl)', color: 'var(--char-700)', padding: '1px 6px', borderRadius: 4, fontWeight: 650 }}>{area.title}</span></p>}
         </div>
         <div className="row gap-2 wrap" style={{ justifyContent: 'flex-end' }}>
+          <DitChip db={db} athleteId={a.id} />
           {a.status !== 'active' && <StatusBadge status={a.status} />}
           {w.canManageOrg && <Button size="sm" icon={<Pencil size={14} />} onClick={() => setEditing(true)}>Edit profile</Button>}
           {w.canManageOrg && a.status === 'active' && <Button size="sm" icon={<ArrowRightLeft size={14} />} onClick={() => setTransfer(true)}>Transfer</Button>}

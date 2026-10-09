@@ -7,7 +7,7 @@ import type { Report } from '../../data/types';
 import { Assumption, Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
 import { ReportView } from '../../components/ReportView';
 import { Seam } from '../../components/Seam';
-import { useHuddle, useHuddleContext } from '../../huddle/Huddle';
+import { useCompanion, useCompanionContext } from '../../companion/Companion';
 import { PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -17,7 +17,7 @@ export function ReportsPage() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const [athleteId, setAthleteId] = useState(params.get('athlete') ?? '');
-  useHuddleContext({ surface: 'web', title: 'Parent reports', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'web', title: 'Parent reports', prompts: ['What can you help with?'] });
 
   const start = () => {
     if (!athleteId) return;
@@ -69,7 +69,7 @@ export function ReportComposer() {
   const { reportId } = useParams();
   const { db, update, audit, toast } = useStore();
   const w = useWeb();
-  const h = useHuddle();
+  const h = useCompanion();
   const report = db.reports.find((r) => r.id === reportId);
   const [draft, setDraft] = useState<Report | null>(report ?? null);
   const [correcting, setCorrecting] = useState(false);
@@ -83,7 +83,7 @@ export function ReportComposer() {
     if (storedKey && !correcting) setDraft(JSON.parse(storedKey) as Report);
   }, [storedKey, correcting]);
 
-  useHuddleContext(report ? {
+  useCompanionContext(report ? {
     surface: 'web', title: `Report · ${athleteById(db, report.athleteId)?.name} · ${report.period}`, athleteId: report.athleteId,
     prompts: ['Draft a parent-friendly comment', 'Summarise recent sessions'],
   } : null, { useText: { label: 'Insert into coach comment', run: (t) => setDraft((d) => (d ? { ...d, comment: t } : d)) } });
@@ -159,12 +159,12 @@ export function ReportComposer() {
             <div className="row between wrap gap-2">
               <h2 className="h3">Coach comment <FlowCode codes="MW11.03" /></h2>
               {editable && (
-                <button className="seam-btn" onClick={() => h.openHuddle({ ask: 'Draft a parent-friendly comment' })}>
-                  <Seam size={20} /> Draft with Huddle
+                <button className="seam-btn" onClick={() => h.openCompanion({ ask: 'Draft a parent-friendly comment' })}>
+                  <Seam size={20} /> Draft with dit
                 </button>
               )}
             </div>
-            <Field id="rc-comment" label="Comment" hint="Parents read this first. Huddle drafts only from family-visible records, and you edit before approving." error={commentErr}>
+            <Field id="rc-comment" label="Comment" hint="Parents read this first. dit drafts only from family-visible records, and you edit before approving." error={commentErr}>
               <textarea id="rc-comment" className="textarea" style={{ minHeight: 140 }} value={draft.comment} onChange={(e) => set({ comment: e.target.value })} disabled={!editable} aria-invalid={!!commentErr} />
             </Field>
             <Assumption code="PA04.04" />
@@ -259,7 +259,7 @@ export function ReportComposer() {
             <p className="small strong row gap-1"><Eye size={14} /> What the parent sees</p>
             <FlowCode codes="MW11.08" />
           </div>
-          <div className="card" style={{ background: 'var(--chalk-100)', maxHeight: 'calc(100vh - 140px)', overflowY: 'auto' }}>
+          <div className="card" style={{ background: 'var(--grey-100)', maxHeight: 'calc(100vh - 140px)', overflowY: 'auto' }}>
             <ReportView db={db} report={{ ...draft, status: correcting ? 'corrected' : draft.status, version: correcting ? report.version + 1 : draft.version, correctionNote: correcting ? correctionNote || '…' : draft.correctionNote }} />
           </div>
         </aside>

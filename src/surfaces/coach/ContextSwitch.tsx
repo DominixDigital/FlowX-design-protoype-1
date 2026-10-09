@@ -3,7 +3,7 @@ import { Check, ExternalLink } from 'lucide-react';
 import { useStore } from '../../store/store';
 import { fmtDate } from '../../store/selectors';
 import { Banner, FlowCode } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { CoachHeader } from './parts';
 import { useCoach } from './useCoach';
 
@@ -14,7 +14,7 @@ export function ContextSwitch() {
   const { db, setPersona, personas } = useStore();
   const c = useCoach();
   const nav = useNavigate();
-  useHuddleContext({ surface: 'coach', title: 'Academy and role', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: 'Academy and role', prompts: ['What can you help with?'] });
 
   return (
     <>
@@ -39,7 +39,7 @@ export function ContextSwitch() {
                       {ROLE[m.role]}{m.expiresOn ? ` · temporary until ${fmtDate(m.expiresOn)}` : ''}{m.status === 'removed' ? ' · access removed' : ''}
                     </span>
                   </span>
-                  {isCurrent && <Check size={18} color="var(--forest-600)" aria-label="Current" />}
+                  {isCurrent && <Check size={18} color="var(--role-600)" aria-label="Current" />}
                 </button>
               ) : (
                 <Link className="list-row" to="/parent" onClick={() => setPersona('parent', { personId: c.person.id, academyId: m.academyId })}>

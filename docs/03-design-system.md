@@ -1,4 +1,6 @@
-# FlowX design system
+# ditdit design system
+
+> **Updated for ditdit.** Colours now follow the approved five-colour palette and role architecture in [07-colour-system.md](07-colour-system.md). The companion is **dit** (two-dot avatar, `src/companion/DitAvatar.tsx`), and the Dit Score visual language lives in `src/score/` and `src/styles/score.css`. Earlier colour names in this doc (forest, chalk, court) describe the FlowX era and map to `--role-*`, `--grey-*`, `--char-*`.
 
 Tokens: `src/styles/tokens.css`. Components: `src/components/`, `src/huddle/`. Explorations: `#/explore`.
 
@@ -7,10 +9,10 @@ Tokens: `src/styles/tokens.css`. Components: `src/components/`, `src/huddle/`. E
 | Mode | `data-theme` | Use for | Never use for |
 |---|---|---|---|
 | **Chalk** (default) | `chalk` | Rosters, forms, tasks, reports, lists. Roughly 80% of screens | — |
-| **Floodlit** | `floodlit` | Huddle (always), the Athlete App, performance and milestone moments | Dense operational lists |
+| **Floodlit** | `floodlit` | dit (companion) (always), the Athlete App, performance and milestone moments | Dense operational lists |
 | **Matchday** | `matchday` | Onboarding, passport header, report cover, milestone celebration | Anything a coach does with one hand courtside |
 
-Every themed subtree re-resolves its own colours, so any component works in any mode. Huddle is always Floodlit, so AI output can never be mistaken for recorded data.
+Every themed subtree re-resolves its own colours, so any component works in any mode. dit (companion) is always Floodlit, so AI output can never be mistaken for recorded data.
 
 ## Colour
 
@@ -19,7 +21,7 @@ Every themed subtree re-resolves its own colours, so any component works in any 
 | `--chalk-100` | `#eceee4` | Operational background: pitch-line chalk, cooler than cream |
 | `--ink-900` | `#111c17` | Text on chalk; Floodlit surfaces |
 | `--forest-700` | `#14432f` | Primary action, identity, web sidebar (`--forest-800`) |
-| `--lime-400` | `#d7ff3c` | Highlight, active state, Huddle accent. Always with ink text, never as text on chalk |
+| `--lime-400` | `#d7ff3c` | Highlight, active state, dit (companion) accent. Always with ink text, never as text on chalk |
 | `--court-600` / `--court-900` | `#1f4fb8` / `#0a1a36` | Matchday plates, info, competition data |
 | semantic `--ok` / `--warn` / `--err` / `--info` | AA on chalk | Status. Always paired with a shape glyph |
 
@@ -38,13 +40,13 @@ Every themed subtree re-resolves its own colours, so any component works in any 
 
 - **Space:** a 4px scale, `--s-1` to `--s-16`.
 - **Radius:** 4 (badges, inputs-in-tables), 8 (buttons, inputs), 12 (cards), 20–28 (sheets, plates, phone). The radius follows hierarchy rather than being uniform.
-- **Motion:** 140/220/420ms with `--ease-out`. The only orchestrated motion is Huddle's object reveal, staggered 90ms. `prefers-reduced-motion` turns all motion off.
+- **Motion:** 140/220/420ms with `--ease-out`. The only orchestrated motion is dit (companion)'s object reveal, staggered 90ms. `prefers-reduced-motion` turns all motion off.
 
 ## Core components
 
 `Button` (pending state dedupes repeat submits) · `StatusBadge` · `Field` (label above, error inline with `role=alert`) · `Banner` · `StateBlock` (empty / error / permission / archived / offline / withdrawn) · `ConfirmDialog` (native `<dialog>`) · `Metric` (one number, with a basis line saying where it comes from) · `Timeline` · `Clip` (upload, processing and share states kept separate) · `PitchArt` / `PhotoSlot` (honest image placeholders) · `SyncPill` · `Assumption` / `AssumptionNote` / `FlowCode` (traceability).
 
-## Huddle: the AI layer
+## dit (companion): the AI layer
 
 - **Seam** (`components/Seam.tsx`) is the companion mark: two stitched ball-seam arcs, deliberately not an orb.
   - `idle`: still.
@@ -54,7 +56,7 @@ Every themed subtree re-resolves its own colours, so any component works in any 
   - `done`: arcs turn lime.
 - **Presence:** a compact launcher. A FAB on mobile and a top-bar button on web. It never covers primary actions.
 - **Canvas:** plays stack; they don't scroll as a transcript.
-  - Each question becomes a display headline, and Huddle answers with objects.
+  - Each question becomes a display headline, and dit (companion) answers with objects.
   - Earlier plays collapse to one line.
   - Context ("Looking at: …") follows the screen, role and selected entity.
 - **Objects** (`huddle/engine.ts`): `interpretation`, `facts`, `evidence`, `suggestion`, `compare`, `explainer`, `draft`, `moment`, `capabilities`, `notice`.

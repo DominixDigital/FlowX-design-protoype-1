@@ -5,7 +5,7 @@ import { useStore } from '../../store/store';
 import { TODAY } from '../../data/fixtures';
 import { areaById, athleteById, attendanceFor, coachById, fmtDate, daysUntil, relDay } from '../../store/selectors';
 import { Avatar, FlowCode, Metric, StatusBadge, StateBlock } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -13,7 +13,7 @@ import { useWeb } from './useWeb';
 export function Overview() {
   const { db } = useStore();
   const w = useWeb();
-  useHuddleContext({ surface: 'web', title: `Overview · ${w.academy.name}`, prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'web', title: `Overview · ${w.academy.name}`, prompts: ['What can you help with?'] });
 
   const active = db.athletes.filter((a) => a.status === 'active');
   const coaches = db.coaches.filter((c) => c.academyId === w.academy.id && c.status === 'active');

@@ -178,10 +178,10 @@ export function Field({
 
 export function Metric({ label, value, basis, accent }: { label: string; value: ReactNode; basis: string; accent?: boolean }) {
   return (
-    <div className="metric" style={accent ? { background: 'var(--lime-400)', borderColor: 'var(--lime-400)', color: 'var(--ink-950)' } : undefined}>
+    <div className="metric" style={accent ? { background: 'var(--hl)', borderColor: 'var(--hl)', color: 'var(--char-700)' } : undefined}>
       <span className="metric-label">{label}</span>
       <span className="num">{value}</span>
-      <span className="metric-basis" style={accent ? { color: 'var(--ink-700)' } : undefined}>{basis}</span>
+      <span className="metric-basis" style={accent ? { color: 'var(--char-400)' } : undefined}>{basis}</span>
     </div>
   );
 }
@@ -197,7 +197,7 @@ export function Toasts() {
           {t.action && (
             <button onClick={() => { t.action!.run(); dismissToast(t.id); }}>{t.action.label}</button>
           )}
-          <button aria-label="Dismiss" onClick={() => dismissToast(t.id)} style={{ color: 'var(--slate-400)' }}>
+          <button aria-label="Dismiss" onClick={() => dismissToast(t.id)} style={{ color: 'var(--grey-600)' }}>
             <X size={14} />
           </button>
         </div>

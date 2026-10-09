@@ -5,10 +5,10 @@ import { useStore, uid } from '../../store/store';
 import { areaById, athleteById, coachById, fmtDate, observationsFor } from '../../store/selectors';
 import { Assumption, Banner, Button, ConfirmDialog, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
 import { Clip } from '../../components/art';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { PageHead } from './parts';
 import { useWeb } from './useWeb';
-import { tone } from '../../huddle/engine';
+import { tone } from '../../companion/engine';
 
 /** MW08.01–07 · HC02.05 */
 export function DevelopmentPage() {
@@ -20,7 +20,7 @@ export function DevelopmentPage() {
   const activeAreas = db.areas.filter((a) => a.status === 'active' || a.status === 'reopened');
   const sel = areaById(db, areaId) ?? activeAreas[0];
   const athlete = athleteById(db, sel?.athleteId);
-  useHuddleContext(sel && athlete ? {
+  useCompanionContext(sel && athlete ? {
     surface: 'web', title: `Development · ${athlete.name} · ${sel.title}`, athleteId: athlete.id,
     reassessmentId: db.reassessments.find((r) => r.areaId === sel.id && r.status !== 'approved')?.id,
     prompts: ['Summarise recent sessions', 'Compare the last two sessions', ...(db.reassessments.some((r) => r.areaId === sel.id && r.status !== 'approved') ? ['Brief me on the evidence'] : [])],
@@ -42,7 +42,7 @@ export function DevelopmentPage() {
               const isSel = a.id === sel?.id;
               return (
                 <li key={a.id}>
-                  <Link to={`/web/development/${a.id}`} className="list-row" aria-current={isSel ? 'page' : undefined} style={isSel ? { background: 'var(--surface-2)', boxShadow: 'inset 4px 0 0 var(--forest-700)' } : undefined}>
+                  <Link to={`/web/development/${a.id}`} className="list-row" aria-current={isSel ? 'page' : undefined} style={isSel ? { background: 'var(--surface-2)', boxShadow: 'inset 4px 0 0 var(--role-700)' } : undefined}>
                     <span className="grow stack">
                       <span className="small strong">{ath.name}</span>
                       <span className="xs muted">{a.title}</span>

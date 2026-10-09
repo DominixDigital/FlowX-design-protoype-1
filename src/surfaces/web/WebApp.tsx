@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { LayoutDashboard, Users, Target, ClipboardList, Flag, FileText, Layers, UserCog, Building2, Search } from 'lucide-react';
 import { useStore } from '../../store/store';
 import { Wordmark, ProtoControls } from '../../components/chrome';
-import { HuddleCanvas, SeamButton } from '../../huddle/Huddle';
+import { CompanionCanvas, CompanionIntro, SeamButton } from '../../companion/Companion';
 import { Overview } from './Overview';
 import { AthletesPage, Passport } from './Athletes';
 import { DevelopmentPage } from './Development';
@@ -40,7 +40,7 @@ export function WebApp() {
   ];
 
   return (
-    <div className="w-shell" data-theme="chalk">
+    <div className="w-shell" data-theme="chalk" data-role="coach">
       <aside className="w-side" aria-label="Management navigation">
         <div style={{ padding: '0 12px' }}><Wordmark /></div>
         <nav>
@@ -122,7 +122,8 @@ export function WebApp() {
           </Routes>
         </main>
       </div>
-      <HuddleCanvas variant="panel" />
+      <CompanionCanvas variant="panel" />
+      <CompanionIntro surface="web" fixed />
       <ProtoControls />
     </div>
   );

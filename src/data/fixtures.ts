@@ -1,4 +1,5 @@
 import type {
+  AthleteScorePrefs, CompanionPrefs, ScoreReview, ScoreSettings,
   Academy, Athlete, Batch, Coach, Competition, DevArea, Feedback, Goal, Handover, Milestone,
   Notification, Observation, Person, PracticeLog, Reassessment, Report, Session, Task, Video,
 } from './types';
@@ -275,10 +276,10 @@ export const reports: Report[] = [
 ];
 
 export const feedback: Feedback[] = [
-  { id: 'f-1', athleteId: 'a-tara', coachId: 'c-rohan', text: 'Brilliant effort on Tuesday. Watch the 0:19 clip — that sway is exactly what we want every time.', videoId: 'v-2', status: 'published', publishedAt: '2026-10-06T20:00' },
-  { id: 'f-2', athleteId: 'a-tara', coachId: 'c-rohan', text: 'Keep backing up at the non-striker’s end. You were half a yard late twice.', videoId: null, status: 'published', publishedAt: '2026-10-03T19:30' },
+  { id: 'f-1', athleteId: 'a-tara', sessionId: 's-0991', coachId: 'c-rohan', text: 'Brilliant effort on Tuesday. Watch the 0:19 clip — that sway is exactly what we want every time.', videoId: 'v-2', status: 'published', publishedAt: '2026-10-06T20:00' },
+  { id: 'f-2', athleteId: 'a-tara', sessionId: 's-0990', coachId: 'c-rohan', text: 'Keep backing up at the non-striker’s end. You were half a yard late twice.', videoId: null, status: 'published', publishedAt: '2026-10-03T19:30' },
   { id: 'f-3', athleteId: 'a-tara', coachId: 'c-rohan', text: 'Selection note for Saturday.', videoId: null, status: 'withdrawn', publishedAt: '2026-09-29T19:00' },
-  { id: 'f-4', athleteId: 'a-kabir', coachId: 'c-neha', text: 'See 0:27 — that is the head position we want on every drive.', videoId: 'v-1', status: 'published', publishedAt: '2026-10-02T19:00' },
+  { id: 'f-4', athleteId: 'a-kabir', sessionId: 's-1002', coachId: 'c-neha', text: 'See 0:27 — that is the head position we want on every drive.', videoId: 'v-1', status: 'published', publishedAt: '2026-10-02T19:00' },
 ];
 
 export const practiceLogs: PracticeLog[] = [
@@ -295,3 +296,40 @@ export const notifications: Notification[] = [
   { id: 'n-5', personId: 'p-tara', kind: 'feedback', title: 'New feedback from Coach Rohan', body: 'Watch the 0:19 clip.', route: '/athlete/feedback/f-1', target: { type: 'feedback', id: 'f-1' }, createdAt: '2026-10-06T20:00', read: false },
   { id: 'n-6', personId: 'p-arjun', kind: 'handover', title: 'Handover from Neha Rao', body: 'Dev Malhotra — landing work paused', route: '/coach/handover/h-1', target: { type: 'handover', id: 'h-1' }, createdAt: '2026-10-08T19:30', read: false },
 ];
+
+/* ───────── ditdit additions ───────── */
+
+/** A recent coach-approved milestone for Tara, not yet celebrated in her app (Flow D). */
+milestones.push({ id: 'm-3', athleteId: 'a-tara', areaId: 'da-tara-short', title: 'Swayed safely under 9 of 10 short balls in the nets', date: '2026-10-08', visibleToFamily: true });
+practiceLogs.push(
+  { id: 'pl-4', athleteId: 'a-tara', goalId: 'g-tara-short', date: '2026-09-22' },
+  { id: 'pl-5', athleteId: 'a-tara', goalId: 'g-tara-short', date: '2026-09-25' },
+  { id: 'pl-6', athleteId: 'a-tara', goalId: 'g-tara-short', date: '2026-09-29' },
+  { id: 'pl-7', athleteId: 'a-kabir', goalId: 'g-kabir-head', date: '2026-09-24' },
+);
+/** Earlier U14 sessions so score history has real records behind it. */
+sessions.push(
+  { id: 's-0975', batchId: 'b-u14', title: 'Grip and stance', date: '2026-09-12', start: '17:45', end: '19:00', locationId: 'loc-main', coachId: 'c-rohan', status: 'completed', plan: 'Fundamentals check.', attendance: marks(u14, []), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0977', batchId: 'b-u14', title: 'Short-ball awareness', date: '2026-09-16', start: '17:45', end: '19:00', locationId: 'loc-nets', coachId: 'c-rohan', status: 'completed', plan: 'Tennis-ball bouncers, ducking and swaying.', attendance: marks(u14, ['a-riya']), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0988', batchId: 'b-u16', title: 'Middle practice', date: '2026-09-16', start: '16:00', end: '17:30', locationId: 'loc-main', coachId: 'c-neha', status: 'completed', plan: 'Centre-wicket batting.', attendance: marks(u16, ['a-dev']), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0991b', batchId: 'b-u16', title: 'Spin bowling and sweeps', date: '2026-09-19', start: '16:00', end: '17:30', locationId: 'loc-nets', coachId: 'c-neha', status: 'completed', plan: 'Sweep and reverse sweep options.', attendance: marks(u16, []), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0980', batchId: 'b-u14', title: 'Back-foot defence', date: '2026-09-19', start: '17:45', end: '19:00', locationId: 'loc-nets', coachId: 'c-rohan', status: 'completed', plan: 'Back-foot defence against short balls.', attendance: marks(u14, ['a-tara']), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0984', batchId: 'b-u14', title: 'Throwdowns and leaving', date: '2026-09-26', start: '17:45', end: '19:00', locationId: 'loc-nets', coachId: 'c-rohan', status: 'completed', plan: 'Judging line and leaving.', attendance: marks(u14, ['a-omar']), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0994', batchId: 'b-u16', title: 'Fielding and catching', date: '2026-09-23', start: '16:00', end: '17:30', locationId: 'loc-main', coachId: 'c-neha', status: 'completed', plan: 'High catches, slip cordon.', attendance: marks(u16, ['a-kabir', 'a-ishaan']), attendanceSync: 'synced', walkIns: [] },
+  { id: 's-0997', batchId: 'b-u16', title: 'Batting against pace', date: '2026-09-28', start: '16:00', end: '17:30', locationId: 'loc-nets', coachId: 'c-neha', status: 'completed', plan: 'Bowling machine at 110 km/h.', attendance: marks(u16, []), attendanceSync: 'synced', walkIns: [] },
+);
+reassessments.push({ id: 'r-0', athleteId: 'a-kabir', areaId: 'da-kabir-run', assigneeId: 'c-neha', due: '2026-09-13', status: 'approved', outcome: 'achieved', note: 'Calling is loud and early in every match sim.', nextAction: '', milestoneId: 'm-1', submittedAt: '2026-09-13T18:00' });
+feedback.push({ id: 'f-5', athleteId: 'a-tara', sessionId: null, coachId: 'c-rohan', text: 'Good energy in the field today. Your long barrier is solid — keep your eyes on the ball into the hands.', videoId: null, status: 'published', publishedAt: '2026-10-08T19:30' });
+
+export const scoreSettings: ScoreSettings = { enabled: true, comparisonBatchIds: ['b-u16'], comparisonMinAge: 13, rankPositionsMinAge: 16 };
+
+export const scorePrefs: Record<string, AthleteScorePrefs> = {
+  'a-kabir': { visibility: 'family', comparisonOptIn: true, seenMilestoneIds: ['m-1'], shareRequests: [] },
+  'a-tara': { visibility: 'family', comparisonOptIn: false, seenMilestoneIds: ['m-2'], shareRequests: [] },
+};
+
+export const scoreReviews: ScoreReview[] = [
+  { athleteId: 'a-kabir', reviewedById: 'c-neha', at: '2026-10-05T19:00', paused: false },
+];
+
+export const companionPrefs: Record<string, CompanionPrefs> = {};

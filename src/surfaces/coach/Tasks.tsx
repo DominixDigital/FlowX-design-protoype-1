@@ -5,14 +5,14 @@ import { useStore, uid, nowISO } from '../../store/store';
 import { TODAY } from '../../data/fixtures';
 import { areaById, athleteById, coachById, fmtDate, daysUntil, observationsFor } from '../../store/selectors';
 import { Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge, StateBlock, Assumption } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { CoachHeader, CoachGate, NotFound } from './parts';
 import { useCoach } from './useCoach';
 
 export function TaskList() {
   const { db } = useStore();
   const c = useCoach();
-  useHuddleContext({ surface: 'coach', title: 'Tasks', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: 'Tasks', prompts: ['What can you help with?'] });
   const mine = db.tasks.filter((t) => t.assigneeId === c.coach?.id);
   const active = mine.filter((t) => ['open', 'in_progress', 'blocked'].includes(t.status));
   const done = mine.filter((t) => ['completed', 'cancelled'].includes(t.status));
@@ -84,7 +84,7 @@ export function TaskDetail() {
   const [follow, setFollow] = useState('');
   const [stale, setStale] = useState(false);
 
-  useHuddleContext(task ? {
+  useCompanionContext(task ? {
     surface: 'coach', title: `Task · ${task.title}`, athleteId: task.athleteId,
     prompts: ['Summarise recent sessions', 'What’s the next action?'],
   } : null);
@@ -135,7 +135,7 @@ export function TaskDetail() {
         )}
         {!mineToAct && !terminal && <div className="m-section"><Banner tone="warn">This task is assigned to {coachById(db, task.assigneeId)?.name}. You can view it but not act on it.</Banner></div>}
 
-        <section className="m-section card" style={{ borderLeft: '4px solid var(--forest-700)' }}>
+        <section className="m-section card" style={{ borderLeft: '4px solid var(--role-700)' }}>
           <p className="xs strong muted">Instruction from {coachById(db, task.createdById)?.name} <FlowCode codes="CM08.03" /></p>
           <p style={{ marginTop: 6 }}>{task.instruction}</p>
         </section>
@@ -213,7 +213,7 @@ export function HandoverNew() {
   const [next, setNext] = useState('');
   const [to, setTo] = useState('');
   const [touched, setTouched] = useState(false);
-  useHuddleContext({
+  useCompanionContext({
     surface: 'coach', title: athleteId ? `Handover · ${athleteById(db, athleteId)?.name}` : 'New handover', athleteId: athleteId || undefined,
     prompts: athleteId ? ['Summarise recent sessions'] : ['What can you help with?'],
   }, { useText: { label: 'Use as summary', run: (t) => setSummary(t) } });
@@ -249,7 +249,7 @@ export function HandoverNew() {
               {athletes.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </Field>
-          <Field id="ho-s" label="Summary" hint="What the next coach needs to know. Huddle can draft this from recent notes." error={touched && !summary.trim() ? 'Add a summary.' : ''}>
+          <Field id="ho-s" label="Summary" hint="What the next coach needs to know. dit can draft this from recent notes." error={touched && !summary.trim() ? 'Add a summary.' : ''}>
             <textarea id="ho-s" className="textarea" value={summary} onChange={(e) => setSummary(e.target.value)} />
           </Field>
           <Field id="ho-n" label="Required next action" optional>
@@ -275,7 +275,7 @@ export function HandoverDetail() {
   const c = useCoach();
   const nav = useNavigate();
   const h = db.handovers.find((x) => x.id === id);
-  useHuddleContext(h ? { surface: 'coach', title: `Handover · ${athleteById(db, h.athleteId)?.name}`, athleteId: h.athleteId, prompts: ['Summarise recent sessions'] } : null);
+  useCompanionContext(h ? { surface: 'coach', title: `Handover · ${athleteById(db, h.athleteId)?.name}`, athleteId: h.athleteId, prompts: ['Summarise recent sessions'] } : null);
   // CM09.05: opening marks it read for the sender
   useEffect(() => {
     if (h && h.toId === c.coach?.id && h.status === 'sent') update((d) => { const x = d.handovers.find((y) => y.id === h.id); if (x) x.status = 'opened'; });

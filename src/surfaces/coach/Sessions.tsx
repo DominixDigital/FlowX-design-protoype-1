@@ -6,14 +6,14 @@ import { TODAY } from '../../data/fixtures';
 import { athleteById, batchById, fmtDate, locationName } from '../../store/selectors';
 import type { AttendanceMark, Session } from '../../data/types';
 import { Avatar, Banner, Button, ConfirmDialog, FlowCode, StatusBadge, StateBlock, Assumption, AssumptionNote } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { CoachHeader, CoachGate, NotFound } from './parts';
 import { useCoach } from './useCoach';
 
 export function Sessions() {
   const { db } = useStore();
   const c = useCoach();
-  useHuddleContext({ surface: 'coach', title: 'Sessions', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: 'Sessions', prompts: ['What can you help with?'] });
   const mine = db.sessions.filter((s) => c.role === 'head_coach' || s.coachId === c.coach?.id || batchById(db, s.batchId)?.assistantIds.includes(c.coach?.id ?? ''));
   const upcoming = mine.filter((s) => s.date >= TODAY && s.status !== 'completed' && s.status !== 'cancelled').sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   const history = mine.filter((s) => s.status === 'completed' || s.status === 'cancelled').sort((a, b) => b.date.localeCompare(a.date));
@@ -63,7 +63,7 @@ export function SessionDetail() {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [q, setQ] = useState('');
 
-  useHuddleContext(session ? {
+  useCompanionContext(session ? {
     surface: 'coach', title: `${session.title} · ${batchById(db, session.batchId)?.name}`, sessionId: session.id,
     prompts: ['What can you help with?'],
   } : null);
@@ -119,7 +119,7 @@ export function SessionDetail() {
       <CoachGate>
         <section className="m-section">
           <div className="row gap-2 wrap">
-            <span className="xs strong" style={{ color: 'var(--forest-600)' }}>{batch.name}</span>
+            <span className="xs strong" style={{ color: 'var(--role-600)' }}>{batch.name}</span>
             <StatusBadge status={session.status} label={session.status === 'in_progress' ? 'Live' : undefined} />
             {session.attendanceSync !== 'synced' && <StatusBadge status={session.attendanceSync} />}
           </div>
@@ -260,7 +260,7 @@ export function WrapUp() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState('');
   const session = db.sessions.find((s) => s.id === id);
-  useHuddleContext(session ? { surface: 'coach', title: `Wrap-up · ${session.title}`, sessionId: session.id, prompts: ['What can you help with?'] } : null);
+  useCompanionContext(session ? { surface: 'coach', title: `Wrap-up · ${session.title}`, sessionId: session.id, prompts: ['What can you help with?'] } : null);
   if (!session) return <><CoachHeader back="/coach" /><NotFound what="session" back="/coach" /></>;
 
   const drafts = db.observations.filter((o) => o.sessionId === session.id && o.status === 'draft');

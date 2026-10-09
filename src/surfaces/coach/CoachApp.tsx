@@ -2,7 +2,8 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { Home, CalendarDays, Users, ClipboardList, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { PhoneStage, StatusBar, MobileNav } from '../../components/chrome';
-import { HuddleCanvas, SeamButton } from '../../huddle/Huddle';
+import { CompanionCanvas, CompanionIntro, SeamButton } from '../../companion/Companion';
+import { CoachScoreReview } from './CoachScore';
 import { Today } from './Today';
 import { Sessions, SessionDetail, WrapUp } from './Sessions';
 import { AthleteContext, AthletesList, GoalEditor, NewArea } from './Athlete';
@@ -30,7 +31,8 @@ export function CoachApp() {
       journeys={[
         { label: 'Today’s work', to: '/coach', codes: 'CM01.04 · CM02.01' },
         { label: 'Run the 16:00 session', to: '/coach/session/s-1005', codes: 'CM02 · CM03' },
-        { label: 'Kabir’s context + Huddle', to: '/coach/athlete/a-kabir?session=s-1005', codes: 'CM04 · CM05' },
+        { label: 'Kabir’s context + dit voice note', to: '/coach/athlete/a-kabir?session=s-1005', codes: 'CM04 · CM05 · Flow E' },
+        { label: 'Review Kabir’s Dit Score inputs', to: '/coach/athlete/a-kabir/score', codes: 'Score validation' },
         { label: 'Reassess Kabir', to: '/coach/reassess/r-1', codes: 'CM12' },
         { label: 'Capture video', to: '/coach/capture?mode=video', codes: 'CM10' },
         { label: 'Review a clip', to: '/coach/video/v-1', codes: 'CM11' },
@@ -39,7 +41,7 @@ export function CoachApp() {
         { label: 'Academy & role', to: '/coach/context', codes: 'CM01.02–03 · XS01' },
       ]}
     >
-      <div className="m-app" data-theme="chalk">
+      <div className="m-app" data-theme="chalk" data-role="coach">
         <StatusBar />
         <main className="m-body" id="main" tabIndex={-1} ref={bodyRef}>
           <Routes>
@@ -51,6 +53,7 @@ export function CoachApp() {
             <Route path="athletes" element={<AthletesList />} />
             <Route path="athlete/:id" element={<AthleteContext />} />
             <Route path="athlete/:id/area/new" element={<NewArea />} />
+            <Route path="athlete/:id/score" element={<CoachScoreReview />} />
             <Route path="goal/:id" element={<GoalEditor />} />
             <Route path="tasks" element={<TaskList />} />
             <Route path="tasks/:id" element={<TaskDetail />} />
@@ -72,7 +75,8 @@ export function CoachApp() {
             { to: '/coach/tasks', label: 'Tasks', icon: <ClipboardList size={20} /> },
           ]}
         />
-        <HuddleCanvas variant="sheet" />
+        <CompanionCanvas variant="sheet" />
+        <CompanionIntro surface="coach" />
       </div>
     </PhoneStage>
   );

@@ -1,17 +1,19 @@
-// Huddle demo engine.
+// Companion demo engine.
 // No language model is connected. Everything here is deterministic logic over records that
 // already exist in the store; nothing is measured or invented. The UI labels every output
 // as "Demo logic" and labels interpretations as "Suggestion".
 
 import type { DB } from '../store/store';
 import type { ID, Report } from '../data/types';
+import { computeDitScore, scoreChange, DIMENSIONS } from '../score/ditScore';
+import { currentFocus as focusOf } from '../store/selectors';
 import {
   areaById, athleteById, attendanceFor, currentFocus, fmtDate, fmtTime, observationsFor, sessionById,
 } from '../store/selectors';
 
 export type Ref = { kind: 'observation' | 'session' | 'video' | 'goal' | 'attendance' | 'practice' | 'milestone' | 'task' | 'report'; id: string; label: string };
 
-export type HuddleObject =
+export type CompanionObject =
   | { type: 'interpretation'; heading: string; fields: { label: string; value: string; confidence?: 'clear' | 'check' }[]; basis: Ref[] }
   | { type: 'evidence'; heading: string; items: { date: string; text: string; ref: Ref; tone?: 'positive' | 'concern' | 'neutral' }[] }
   | { type: 'facts'; heading: string; items: { label: string; value: string; basis: string }[] }
@@ -22,9 +24,17 @@ export type HuddleObject =
   | { type: 'moment'; videoTitle: string; t: number; coachText: string; cue: string; drill?: string }
   | { type: 'proposal'; id: string; heading: string; lines: string[]; confirmLabel: string; editable?: { label: string; value: string } }
   | { type: 'capabilities'; heading: string; items: string[] }
-  | { type: 'notice'; tone: 'info' | 'warn'; text: string };
+  | { type: 'notice'; tone: 'info' | 'warn'; text: string }
+  // ditdit conversation objects
+  | { type: 'say'; text: string; mood?: 'idle' | 'explaining' | 'celebrating' | 'uncertain' | 'insight' }
+  | { type: 'choices'; options: { label: string; ask?: string; to?: string; action?: 'ask_coach' }[] }
+  | { type: 'score'; athleteId: ID; audience: 'athlete' | 'parent' | 'coach' }
+  | { type: 'trend'; athleteId: ID }
+  | { type: 'drivers'; heading: string; items: { label: string; from: number | null; to: number | null; impact: number; trust: string; source: string }[] }
+  | { type: 'nextsteps'; heading: string; items: { text: string; source: string; to?: string }[] }
+  | { type: 'clip'; videoId: ID; t: number; text: string };
 
-export interface HuddleCtx {
+export interface CompanionCtx {
   surface: 'web' | 'coach' | 'parent' | 'athlete';
   title: string;
   athleteId?: ID;
@@ -91,12 +101,12 @@ export function interpretVoiceNote(db: DB, raw: string, rosterIds: ID[], focusAt
         ...(athlete ? [{ kind: 'session' as const, id: 'roster', label: named.length === 1 ? `Name “${athlete.name.split(' ')[0]}” heard; on today’s roster` : 'Athlete open on screen' }] : []),
         ...(area ? [{ kind: 'goal' as const, id: area.id, label: `${overlap} shared ${overlap === 1 ? 'word' : 'words'} with “${area.title}”` }] : []),
       ],
-    } satisfies HuddleObject,
+    } satisfies CompanionObject,
   };
 }
 
 /** CM12.02–04 / MW10.03: everything recorded since the area was opened or last reassessed. */
-export function evidenceBrief(db: DB, reassessmentId: ID): HuddleObject[] {
+export function evidenceBrief(db: DB, reassessmentId: ID): CompanionObject[] {
   const r = db.reassessments.find((x) => x.id === reassessmentId);
   if (!r) return [{ type: 'notice', tone: 'warn', text: 'This reassessment no longer exists or was reassigned.' }];
   const area = areaById(db, r.areaId)!;
@@ -108,7 +118,7 @@ export function evidenceBrief(db: DB, reassessmentId: ID): HuddleObject[] {
   const pos = obs.filter((o) => tone(o.text) === 'positive').length;
   const con = obs.filter((o) => tone(o.text) === 'concern').length;
 
-  const out: HuddleObject[] = [
+  const out: CompanionObject[] = [
     {
       type: 'facts',
       heading: `Recorded since ${fmtDate(area.openedAt)}`,
@@ -141,7 +151,7 @@ export function evidenceBrief(db: DB, reassessmentId: ID): HuddleObject[] {
 }
 
 /** MW11.02–03: parent-safe draft from family-visible records only (XS02.S04). */
-export function draftReportComment(db: DB, athleteId: ID): HuddleObject {
+export function draftReportComment(db: DB, athleteId: ID): CompanionObject {
   const a = athleteById(db, athleteId)!;
   const first = a.name.split(' ')[0];
   const { area, goal } = currentFocus(db, athleteId);
@@ -176,7 +186,7 @@ const GLOSSARY: Record<string, string> = {
 };
 
 /** PA04.03–04 / PA03.03: plain-language explanation of what a parent is already allowed to read. */
-export function explainReport(db: DB, report: Report): HuddleObject {
+export function explainReport(db: DB, report: Report): CompanionObject {
   const a = athleteById(db, report.athleteId)!;
   const first = a.name.split(' ')[0];
   const text = `${report.focusSummary} ${report.comment}`.toLowerCase();
@@ -191,7 +201,7 @@ export function explainReport(db: DB, report: Report): HuddleObject {
 }
 
 /** AT04.04: expand a published timestamp comment into a practice cue. */
-export function explainMoment(db: DB, videoId: ID, t: number): HuddleObject {
+export function explainMoment(db: DB, videoId: ID, t: number): CompanionObject {
   const v = db.videos.find((x) => x.id === videoId)!;
   const c = v.comments.filter((x) => x.shared).reduce((best, x) => (Math.abs(x.t - t) < Math.abs(best.t - t) ? x : best));
   const goal = db.goals.find((g) => g.id === v.goalId);
@@ -209,7 +219,7 @@ export function explainMoment(db: DB, videoId: ID, t: number): HuddleObject {
 }
 
 /** CM04 / MW07: "What happened in recent sessions?" */
-export function recentSummary(db: DB, athleteId: ID): HuddleObject[] {
+export function recentSummary(db: DB, athleteId: ID): CompanionObject[] {
   const obs = observationsFor(db, athleteId).slice(0, 4);
   const att = attendanceFor(db, athleteId);
   const { area, goal } = currentFocus(db, athleteId);
@@ -230,7 +240,7 @@ export function recentSummary(db: DB, athleteId: ID): HuddleObject[] {
 }
 
 /** Compare the two most recent sessions' notes for an athlete. */
-export function compareSessions(db: DB, athleteId: ID): HuddleObject {
+export function compareSessions(db: DB, athleteId: ID): CompanionObject {
   const bySession = new Map<string, string[]>();
   for (const o of observationsFor(db, athleteId)) {
     if (!o.sessionId) continue;
@@ -247,18 +257,18 @@ export function compareSessions(db: DB, athleteId: ID): HuddleObject {
   };
 }
 
-export function capabilities(ctx: HuddleCtx): HuddleObject {
-  const byRole: Record<HuddleCtx['surface'], string[]> = {
+export function capabilities(ctx: CompanionCtx): CompanionObject {
+  const byRole: Record<CompanionCtx['surface'], string[]> = {
     coach: ['Turn a voice note into a draft observation', 'Summarise an athlete’s recent sessions', 'Compare notes from two sessions', 'Brief you on evidence before a reassessment'],
     web: ['Summarise an athlete’s recent sessions', 'Draft a parent-friendly report comment', 'Brief you on reassessment evidence', 'Compare notes from two sessions'],
     parent: ['Explain a report in plain words', 'Explain a cricket term in a report'],
     athlete: ['Explain a coach’s comment on your clip', 'Turn feedback into a practice cue'],
   };
-  return { type: 'capabilities', heading: 'Huddle can help with', items: byRole[ctx.surface] };
+  return { type: 'capabilities', heading: 'Companion can help with', items: byRole[ctx.surface] };
 }
 
 /** Free-text router: picks the object type that fits the intent. */
-export function answer(db: DB, ctx: HuddleCtx, q: string): HuddleObject[] {
+export function answer(db: DB, ctx: CompanionCtx, q: string): CompanionObject[] {
   const s = q.toLowerCase();
   const athleteId = ctx.athleteId;
   if (/explain|mean|plain/.test(s) && ctx.reportId) {
@@ -276,14 +286,158 @@ export function answer(db: DB, ctx: HuddleCtx, q: string): HuddleObject[] {
   if (/summar|recent|happen|last|catch/.test(s) && athleteId) return recentSummary(db, athleteId);
   if (/next/.test(s) && athleteId) {
     const { goal } = currentFocus(db, athleteId);
-    return [{ type: 'suggestion', text: goal?.nextAction ? `On record: ${goal.nextAction}.` : 'No next action is recorded yet.', why: ['Read from the active goal; Huddle does not set it'] }];
+    return [{ type: 'suggestion', text: goal?.nextAction ? `On record: ${goal.nextAction}.` : 'No next action is recorded yet.', why: ['Read from the active goal; Companion does not set it'] }];
   }
   return [
-    { type: 'notice', tone: 'info', text: athleteId ? 'Huddle could not match that to something it can do here.' : 'Open an athlete, report or clip first. Huddle works with what is on screen.' },
+    { type: 'notice', tone: 'info', text: athleteId ? 'Companion could not match that to something it can do here.' : 'Open an athlete, report or clip first. Companion works with what is on screen.' },
     capabilities(ctx),
   ];
 }
 
 export const SAMPLE_VOICE_NOTES: Record<string, string> = {
   coach: 'Kabir, head stayed still on the drive this time, eyes level over the front knee on most throwdowns. Still reaches for the wide one.',
+};
+
+/* ───────────────────────── ditdit: score + session conversations ───────────────────────── */
+
+type Who = 'athlete' | 'parent' | 'coach';
+const who = (ctx: CompanionCtx): Who => (ctx.surface === 'athlete' ? 'athlete' : ctx.surface === 'parent' ? 'parent' : 'coach');
+const first = (db: DB, id: ID) => athleteById(db, id)?.name.split(' ')[0] ?? 'They';
+
+/** Flow C — "What's my Dit Score?" / "Why did my Dit Score change?" */
+export function explainScore(db: DB, ctx: CompanionCtx, athleteId: ID, focus: 'what' | 'why' | 'improve'): CompanionObject[] {
+  const w = who(ctx);
+  const name = first(db, athleteId);
+  const st = computeDitScore(db, athleteId);
+  const you = w === 'athlete';
+  if (st.kind === 'paused') return [{ type: 'say', mood: 'uncertain', text: you ? 'Your coach has paused your Dit Score while they check something. Nothing you did is wrong. It comes back once they’ve looked.' : `${name}’s coach has paused the Dit Score while checking the data behind it.` }];
+  if (st.kind === 'disabled') return [{ type: 'say', mood: 'uncertain', text: 'Dit Scores are switched off at this academy.' }];
+  if (st.kind === 'building') {
+    return [
+      { type: 'say', mood: 'uncertain', text: you ? `I can’t give you a Dit Score yet, and I won’t guess. I still need ${st.missing.join(' and ')}.` : `There isn’t enough verified data for a Dit Score yet. It still needs ${st.missing.join(' and ')}.` },
+      { type: 'choices', options: [{ label: 'What counts towards it?', ask: 'What counts towards the Dit Score?' }] },
+    ];
+  }
+  if (focus === 'what') {
+    return [
+      { type: 'say', mood: 'explaining', text: w === 'parent'
+        ? `${name}’s Dit Score is ${st.value}. It sums up recent development from what coaches record — attendance, coach-confirmed progress, milestones and practice. It isn’t a measure of talent, and it isn’t compared with other sports.`
+        : you ? `Your Dit Score is ${st.value}. It’s built from things your coaches record, mostly the progress they confirm. It’s about your development, not how good you are compared with anyone else.`
+          : `${name}: ${st.value}. ${st.coverage}% of the planned inputs are measurable today.` },
+      { type: 'score', athleteId, audience: w },
+      { type: 'choices', options: [{ label: 'Why did it change?', ask: 'Why did the Dit Score change?' }, { label: you ? 'How can I improve?' : 'What helps it go up?', ask: 'How can the Dit Score improve?' }, { label: 'What counts towards it?', ask: 'What counts towards the Dit Score?' }] },
+    ];
+  }
+  if (focus === 'why') {
+    const ch = scoreChange(db, athleteId);
+    if (!ch) return [{ type: 'say', mood: 'uncertain', text: 'This is the first week with enough data, so there’s nothing to compare yet. Check back after your next sessions.' }];
+    const up = ch.delta > 0;
+    const top = ch.drivers[0];
+    return [
+      { type: 'say', mood: up ? 'celebrating' : 'explaining', text: ch.delta === 0
+        ? 'It held steady since last week. Here’s what moved underneath.'
+        : `${you ? 'Your' : `${name}’s`} score went ${up ? 'up' : 'down'} ${Math.abs(ch.delta)} since ${fmtDate(ch.since)}.${top ? ` The biggest reason: ${(you ? top.def.athleteLabel : top.def.parentLabel).toLowerCase()}.` : ''}` },
+      { type: 'drivers', heading: 'What changed', items: ch.drivers.map((d) => ({ label: you ? d.def.athleteLabel : d.def.label, from: d.from, to: d.to, impact: d.impact, trust: d.def.trust, source: d.def.source })) },
+      { type: 'trend', athleteId },
+      { type: 'choices', options: [{ label: you ? 'How can I improve?' : 'What helps it go up?', ask: 'How can the Dit Score improve?' }, ...(you ? [{ label: 'Ask my coach', action: 'ask_coach' as const }] : [])] },
+    ];
+  }
+  // improve
+  const { area, goal } = focusOf(db, athleteId);
+  const cons = st.dims.find((d) => d.def.key === 'consistency');
+  const prac = st.dims.find((d) => d.def.key === 'practice');
+  const items: { text: string; source: string; to?: string }[] = [];
+  if (goal?.drill) items.push({ text: `${goal.drill.name}, ${goal.drill.frequency.toLowerCase()}`, source: 'Your coach’s plan', to: '/athlete/practice' });
+  if (area) items.push({ text: `Keep working on ${area.title.toLowerCase()}. It counts once your coach reassesses it.`, source: 'Coach-approved focus' });
+  if (cons && cons.value !== null && cons.value < 90) items.push({ text: 'Make the next sessions — attendance is the most direct thing you control.', source: cons.evidence[0] });
+  if (prac && prac.value !== null && prac.value < 80) items.push({ text: 'Mark practice when you do it, so your coach can see it.', source: 'Self-reported, so it counts for less' });
+  return [
+    { type: 'say', mood: 'explaining', text: w === 'parent' ? 'These come from the coach’s current plan. The coach decides priorities, not me.' : 'Here’s what your coach has set up. I won’t invent extra training — anything new comes from your coach.' },
+    { type: 'nextsteps', heading: 'Next steps', items },
+    { type: 'choices', options: you ? [{ label: 'Ask my coach', action: 'ask_coach' }, { label: 'Open practice', to: '/athlete/practice' }] : [] },
+  ];
+}
+
+export function scoreMethod(): CompanionObject[] {
+  return [
+    { type: 'say', mood: 'explaining', text: 'Four things count today. Two more are planned but can’t be measured yet, so I leave them out instead of guessing.' },
+    { type: 'facts', heading: 'Inputs', items: DIMENSIONS.map((d) => ({ label: d.athleteLabel, value: d.weight === null ? '—' : d.trust === 'self_reported' ? 'Low' : 'Yes', basis: d.weight === null ? `Not measured yet: ${d.needs}` : d.source })) },
+    { type: 'notice', tone: 'info', text: 'The weights are a prototype example. ditdit will set the real method with coaches and sports experts.' },
+  ];
+}
+
+/** Flow B — session summary and "explain my mistake", from coach-approved items only. */
+export function sessionInsight(db: DB, ctx: CompanionCtx, step: 'open' | 'improved' | 'work_on' | 'mistake' | 'simple' | 'practise'): CompanionObject[] {
+  const athleteId = ctx.athleteId!;
+  const fb = db.feedback.filter((f) => f.athleteId === athleteId && f.status === 'published' && (!ctx.sessionId || f.sessionId === ctx.sessionId));
+  const vid = fb.map((f) => db.videos.find((v) => v.id === f.videoId && v.share === 'shared')).find(Boolean);
+  const shared = vid ? vid.comments.filter((c) => c.shared) : [];
+  const good = shared.filter((c) => tone(c.text) === 'positive');
+  const fix = shared.filter((c) => tone(c.text) !== 'positive');
+  const { goal } = focusOf(db, athleteId);
+  if (!fb.length) {
+    return [
+      { type: 'say', mood: 'uncertain', text: 'Your coach hasn’t shared feedback for this session yet. I only talk about things your coach has approved, so I’ll let you know when it lands.' },
+      { type: 'choices', options: [{ label: 'Ask my coach', action: 'ask_coach' }] },
+    ];
+  }
+  switch (step) {
+    case 'open':
+      return [
+        { type: 'say', mood: 'explaining', text: 'Good session! Your coach shared feedback. Want to see what went well?' },
+        { type: 'choices', options: [{ label: 'Show me', ask: 'What improved?' }, { label: 'What should I improve?', ask: 'What should I improve?' }] },
+      ];
+    case 'improved':
+      return [
+        { type: 'say', mood: 'celebrating', text: good.length ? 'Your coach spotted this going right:' : `Your coach wrote: “${fb[0].text}”` },
+        ...(vid && good[0] ? [{ type: 'clip' as const, videoId: vid.id, t: good[0].t, text: good[0].text }] : []),
+        { type: 'say', text: fix.length ? 'There’s also one thing to work on.' : 'Keep doing that.' },
+        { type: 'choices', options: [...(fix.length ? [{ label: 'What should I improve?', ask: 'What should I improve?' }] : []), { label: 'How does this affect my Dit Score?', ask: 'Why did the Dit Score change?' }] },
+      ];
+    case 'work_on':
+      if (!fix.length) return [{ type: 'say', mood: 'explaining', text: `Nothing marked to fix in this clip. Your focus is still: ${goal?.title ?? 'what your coach set'}.` }];
+      return [
+        { type: 'say', mood: 'explaining', text: 'This is the one your coach flagged.' },
+        { type: 'choices', options: [{ label: 'Show me the mistake', ask: 'Show me the mistake' }, { label: 'Explain it simply', ask: 'Explain it simply' }, { label: 'What should I practise?', ask: 'What should I practise?' }, { label: 'Ask my coach', action: 'ask_coach' }] },
+      ];
+    case 'mistake':
+      return fix.length && vid
+        ? [{ type: 'clip', videoId: vid.id, t: fix[0].t, text: fix[0].text }, { type: 'choices', options: [{ label: 'Explain it simply', ask: 'Explain it simply' }, { label: 'What should I practise?', ask: 'What should I practise?' }] }]
+        : [{ type: 'say', mood: 'uncertain', text: 'There’s no clip moment for this one.' }];
+    case 'simple':
+      return fix.length && vid
+        ? [explainMoment(db, vid.id, fix[0].t), { type: 'choices', options: [{ label: 'What should I practise?', ask: 'What should I practise?' }, { label: 'Ask my coach', action: 'ask_coach' }] }]
+        : [{ type: 'say', mood: 'uncertain', text: 'I don’t have a coach comment to explain here.' }];
+    case 'practise':
+      return goal?.drill
+        ? [{ type: 'say', mood: 'explaining', text: 'Your coach already set a drill for exactly this.' }, { type: 'nextsteps', heading: 'From your coach’s plan', items: [{ text: `${goal.drill.name} — ${goal.drill.instructions}`, source: goal.drill.frequency, to: '/athlete/practice' }] }]
+        : [{ type: 'say', mood: 'uncertain', text: 'Your coach hasn’t set a drill for this yet. Ask them and it’ll show up in Practice.' }, { type: 'choices', options: [{ label: 'Ask my coach', action: 'ask_coach' }] }];
+  }
+}
+
+/** Router for ditdit intents; returns null when the legacy router should handle it. */
+export function ditdit(db: DB, ctx: CompanionCtx, q: string): CompanionObject[] | null {
+  const s = q.toLowerCase();
+  const athleteId = ctx.athleteId;
+  if (/counts? towards|what counts|how is .*score|method/.test(s)) return scoreMethod();
+  if (athleteId && /dit score|score/.test(s)) {
+    if (/why|change/.test(s)) return explainScore(db, ctx, athleteId, 'why');
+    if (/improve|go up|better/.test(s)) return explainScore(db, ctx, athleteId, 'improve');
+    return explainScore(db, ctx, athleteId, 'what');
+  }
+  if (athleteId && ctx.surface === 'athlete') {
+    if (/how was my session|good session|session/.test(s)) return sessionInsight(db, ctx, 'open');
+    if (/what improved|show me$|went well/.test(s)) return sessionInsight(db, ctx, 'improved');
+    if (/should i improve|work on/.test(s)) return sessionInsight(db, ctx, 'work_on');
+    if (/show me the mistake|mistake/.test(s)) return sessionInsight(db, ctx, 'mistake');
+    if (/simpl/.test(s)) return sessionInsight(db, ctx, 'simple');
+    if (/practi[cs]e/.test(s)) return sessionInsight(db, ctx, 'practise');
+  }
+  return null;
+}
+
+export const ROLE_GREETING: Record<Who, string> = {
+  athlete: 'Ask me about your sessions, your feedback or your Dit Score.',
+  parent: 'I can explain reports, cricket terms and the Dit Score in plain words.',
+  coach: 'Talk a note, or ask me to summarise, compare or brief you.',
 };

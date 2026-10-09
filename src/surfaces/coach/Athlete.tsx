@@ -8,7 +8,8 @@ import {
 } from '../../store/selectors';
 import { Avatar, Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge, StateBlock, Assumption, AssumptionNote } from '../../components/ui';
 import { Clip } from '../../components/art';
-import { useHuddle, useHuddleContext } from '../../huddle/Huddle';
+import { DitChip } from '../../score/ScoreViz';
+import { useCompanion, useCompanionContext } from '../../companion/Companion';
 import { CoachHeader, CoachGate, NotFound } from './parts';
 import { useCoach } from './useCoach';
 import type { DevArea } from '../../data/types';
@@ -17,7 +18,7 @@ export function AthletesList() {
   const { db } = useStore();
   const c = useCoach();
   const [q, setQ] = useState('');
-  useHuddleContext({ surface: 'coach', title: 'Athletes', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: 'Athletes', prompts: ['What can you help with?'] });
   const list = db.athletes
     .filter((a) => a.status === 'active' && a.academyId === c.academy.id && c.inScope(a.id))
     .filter((a) => a.name.toLowerCase().includes(q.toLowerCase()));
@@ -67,12 +68,12 @@ export function AthleteContext() {
   const sessionId = params.get('session') ?? undefined;
   const { db, update, audit, toast } = useStore();
   const c = useCoach();
-  const h = useHuddle();
+  const h = useCompanion();
   const a = athleteById(db, id);
   const [editing, setEditing] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
 
-  useHuddleContext(a ? {
+  useCompanionContext(a ? {
     surface: 'coach',
     title: `${a.name}${sessionId ? ` · ${db.sessions.find((s) => s.id === sessionId)?.title}` : ''}`,
     athleteId: a.id,
@@ -110,6 +111,7 @@ export function AthleteContext() {
             <h1 className="display display-lg">{a.name}</h1>
             <p className="small muted">{a.discipline} · {ageOn(a.born)} · {batchById(db, a.batchId)?.name}</p>
           </div>
+          <Link to={`/coach/athlete/${a.id}/score`} aria-label="Review Dit Score inputs"><DitChip db={db} athleteId={a.id} /></Link>
           {presentToday && presentToday !== 'unmarked' && <StatusBadge status={presentToday === 'present' ? 'active' : 'failed'} label={presentToday === 'present' ? 'Present' : 'Absent'} />}
         </section>
 
@@ -143,7 +145,7 @@ export function AthleteContext() {
 
         <section className="m-section" aria-label="Quick capture">
           <div className="row gap-2">
-            <Button variant="primary" className="grow" icon={<Mic size={16} />} onClick={() => h.openHuddle({ voice: true })}>Talk a note</Button>
+            <Button variant="primary" className="grow" icon={<Mic size={16} />} onClick={() => h.openCompanion({ voice: true })}>Talk a note</Button>
             <Link className="btn grow" to={`/coach/capture?mode=note&athlete=${a.id}${sessionId ? `&session=${sessionId}` : ''}`}><NotebookPen size={16} /> Type</Link>
             <Link className="btn btn-icon" to={`/coach/capture?mode=video&athlete=${a.id}${sessionId ? `&session=${sessionId}` : ''}`} aria-label="Record video"><VideoIcon size={18} /></Link>
           </div>
@@ -156,7 +158,7 @@ export function AthleteContext() {
             <span className="num">{att.total ? `${att.present}/${att.total}` : '—'}</span>
             <span className="metric-basis">recorded sessions</span>
           </div>
-          <Link to={reass ? `/coach/reassess/${reass.id}` : '#'} className="metric card-link" style={reass && daysUntil(reass.due) <= 3 ? { background: 'var(--lime-400)', borderColor: 'var(--lime-400)' } : undefined}>
+          <Link to={reass ? `/coach/reassess/${reass.id}` : '#'} className="metric card-link" style={reass && daysUntil(reass.due) <= 3 ? { background: 'var(--hl)', borderColor: 'var(--hl)' } : undefined}>
             <span className="metric-label">Reassessment</span>
             <span className="num">{reass ? (daysUntil(reass.due) < 0 ? 'Late' : `${daysUntil(reass.due)}d`) : '—'}</span>
             <span className="metric-basis" style={{ color: 'inherit' }}>{reass ? `${reass.status === 'submitted' ? 'Submitted' : 'Due'} ${fmtDate(reass.due)}` : 'None scheduled'} <FlowCode codes="CM04.05" /></span>
@@ -206,7 +208,7 @@ export function AthleteContext() {
                     <div className="row between gap-2">
                       <span className="xs muted">{fmtDate(o.createdAt)} · {areaById(db, o.areaId)?.title ?? 'Unstructured'}</span>
                       <span className="row gap-1">
-                        {o.aiDrafted && <span className="badge badge-outline" title="Drafted from voice by Huddle, confirmed by the coach">AI-drafted</span>}
+                        {o.aiDrafted && <span className="badge badge-outline" title="Drafted from voice by dit, confirmed by the coach">AI-drafted</span>}
                         {o.sync !== 'synced' && <StatusBadge status={o.sync} />}
                       </span>
                     </div>
@@ -255,7 +257,7 @@ export function NewArea() {
   const [touched, setTouched] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [confirmReopen, setConfirmReopen] = useState<DevArea | null>(null);
-  useHuddleContext(a ? { surface: 'coach', title: `New development area · ${a.name}`, athleteId: a.id, prompts: ['Summarise recent sessions'] } : null);
+  useCompanionContext(a ? { surface: 'coach', title: `New development area · ${a.name}`, athleteId: a.id, prompts: ['Summarise recent sessions'] } : null);
   if (!a) return <NotFound what="athlete" back="/coach/athletes" />;
 
   const existing = db.areas.filter((x) => x.athleteId === a.id);
@@ -362,7 +364,7 @@ export function GoalEditor() {
   const [touched, setTouched] = useState(false);
   const [confirmAchieved, setConfirmAchieved] = useState(false);
   const [replacing, setReplacing] = useState(false);
-  useHuddleContext(athlete ? { surface: 'coach', title: `Goal · ${athlete.name}`, athleteId: athlete.id, prompts: ['Summarise recent sessions'] } : null);
+  useCompanionContext(athlete ? { surface: 'coach', title: `Goal · ${athlete.name}`, athleteId: athlete.id, prompts: ['Summarise recent sessions'] } : null);
 
   if (!area || !athlete || (!isNew && !existing)) return <NotFound what="goal" back="/coach/athletes" />;
   const errors = { title: touched && !title.trim() ? 'Give the goal a short title.' : '', target: touched && !target.trim() ? 'Say how you’ll know it’s achieved.' : '' };

@@ -2,13 +2,13 @@ import { CloudOff, Wifi, RefreshCw, AlertTriangle, Check, Smartphone, Server } f
 import { useStore } from '../../store/store';
 import { athleteById } from '../../store/selectors';
 import { Banner, Button, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { CoachHeader } from './parts';
 
 /** CM14.01–09 · XS04 · XS07.S01/S02/S05/S09 */
 export function SyncQueue() {
   const { db, sim, setSim, retry, resolveConflict } = useStore();
-  useHuddleContext({ surface: 'coach', title: 'Sync queue', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: 'Sync queue', prompts: ['What can you help with?'] });
   const queue = db.queue;
   const uploads = db.videos.filter((v) => v.upload !== 'uploaded' || v.processing === 'processing');
   const conflicts = queue.filter((q) => q.status === 'conflict');

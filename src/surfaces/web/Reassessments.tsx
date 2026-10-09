@@ -8,7 +8,7 @@ import type { ReassessmentOutcome } from '../../data/types';
 import { AssumptionNote, Banner, Button, Field, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
 import { Clip } from '../../components/art';
 import { Seam } from '../../components/Seam';
-import { useHuddle, useHuddleContext } from '../../huddle/Huddle';
+import { useCompanion, useCompanionContext } from '../../companion/Companion';
 import { PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -19,7 +19,7 @@ export function ReassessmentsPage() {
   const { rid } = useParams();
   const { db, update, audit, toast } = useStore();
   const w = useWeb();
-  const h = useHuddle();
+  const h = useCompanion();
   const nav = useNavigate();
   const [tab, setTab] = useState<'pending' | 'submitted' | 'approved'>('submitted');
   const list = db.reassessments.filter((r) => (tab === 'pending' ? r.status === 'pending' || r.status === 'in_progress' : r.status === tab));
@@ -35,7 +35,7 @@ export function ReassessmentsPage() {
   // Reset the decision form when a different reassessment is selected.
   useEffect(() => { setMilestone(null); setOutcome(''); setNext(''); setNextTo(''); setAssignee(''); setDue(''); }, [sel?.id]);
 
-  useHuddleContext(sel && athlete ? {
+  useCompanionContext(sel && athlete ? {
     surface: 'web', title: `Reassessment · ${athlete.name}`, athleteId: athlete.id, reassessmentId: sel.id,
     prompts: ['Brief me on the evidence', 'Compare the last two sessions'],
   } : { surface: 'web', title: 'Reassessments', prompts: ['What can you help with?'] });
@@ -59,7 +59,7 @@ export function ReassessmentsPage() {
           {list.length === 0 && <li className="list-row small muted">Nothing here.</li>}
           {list.map((r) => (
             <li key={r.id}>
-              <Link to={`/web/reassessments/${r.id}`} className="list-row" aria-current={r.id === sel?.id ? 'page' : undefined} style={r.id === sel?.id ? { background: 'var(--surface-2)', boxShadow: 'inset 4px 0 0 var(--forest-700)' } : undefined}>
+              <Link to={`/web/reassessments/${r.id}`} className="list-row" aria-current={r.id === sel?.id ? 'page' : undefined} style={r.id === sel?.id ? { background: 'var(--surface-2)', boxShadow: 'inset 4px 0 0 var(--role-700)' } : undefined}>
                 <span className="grow stack"><span className="small strong">{athleteById(db, r.athleteId)?.name}</span><span className="xs muted">{areaById(db, r.areaId)?.title} · {coachById(db, r.assigneeId)?.name}</span></span>
                 <span className="xs muted">{daysUntil(r.due) < 0 && r.status === 'pending' ? 'Overdue' : fmtDate(r.due)}</span>
               </Link>
@@ -100,7 +100,7 @@ export function ReassessmentsPage() {
             <section>
               <div className="section-head">
                 <h3 className="h3">Evidence <FlowCode codes="MW10.03" /></h3>
-                <button className="seam-btn" onClick={() => h.openHuddle({ ask: 'Brief me on the evidence' })}><Seam state="insight" size={20} /> Evidence brief</button>
+                <button className="seam-btn" onClick={() => h.openCompanion({ ask: 'Brief me on the evidence' })}><Seam state="insight" size={20} /> Evidence brief</button>
               </div>
               <div className="w-grid w-grid-3" style={{ gap: 8, marginBottom: 12 }}>
                 <div className="metric"><span className="metric-label">Notes on area</span><span className="num">{obs.length}</span><span className="metric-basis">since {fmtDate(area.openedAt)}</span></div>

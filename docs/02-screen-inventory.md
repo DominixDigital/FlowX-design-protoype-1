@@ -16,9 +16,9 @@ Each screen maps back to its flow codes from [`context/02-flow-registry.md`](con
 | Athlete passport: Matchday header, tabs for overview/history, development, sessions, attendance, videos, reassessments, milestones, competitions, reports; edit profile; transfer | `/web/athletes/:id/:tab?` | MW07.02–11, MW03.04, MW03.07, HC01.01, HC01.07 | ● |
 | Development oversight: area list, then goal, drill, observations, video evidence, decide follow-up, close | `/web/development/:areaId?` | MW08.01–07, HC02.05–06 | ● |
 | Task board, bulk review, create/assign/instruct, status, reassign, follow-up, cancel | `/web/tasks/:taskId?` | MW09.01–08, HC01.02, HC02.03 | ● |
-| Reassessment oversight: lists, assign, evidence and Huddle brief, submitted review, approve/update, next-action task, milestone | `/web/reassessments/:rid?` | MW10.01–07 | ● |
+| Reassessment oversight: lists, assign, evidence and dit (companion) brief, submitted review, approve/update, next-action task, milestone | `/web/reassessments/:rid?` | MW10.01–07 | ● |
 | Report list, start report | `/web/reports` | MW11.01, MW06.07 | ● |
-| Report composer: pull dev info, Huddle comment draft, include toggles, live parent preview, approve, share, correct (versioned), withdraw | `/web/reports/:id` | MW11.02–11 | ● |
+| Report composer: pull dev info, dit (companion) comment draft, include toggles, live parent preview, approve, share, correct (versioned), withdraw | `/web/reports/:id` | MW11.02–11 | ● |
 | Batches: create, add athletes, assign coach/assistant, move, rename, archive; allocation with primary and supporting coach; change during development sends a handover | `/web/batches/:batchId?` | MW04.01–07, MW05.01–04 | ● |
 | Staff: invite (head coach / coach / assistant with expiry), accept (simulated), change role, deactivate with mandatory reassignment, reactivate, view assignments | `/web/staff` | MW02.01–08, MW05.05 | ◐ invitation email is simulated |
 | Academy: details, locations, setup wizard with resume | `/web/academy` | MW01.01–06 | ● |
@@ -37,7 +37,7 @@ Each screen maps back to its flow codes from [`context/02-flow-registry.md`](con
 | New development area: check existing, reopen, priority, cancel | `/coach/athlete/:id/area/new` | CM06.01–06 | ● |
 | Goal editor: next action, drill, frequency, replace drill, mark achieved | `/coach/goal/:id` | CM07.01–07 | ● |
 | Capture: typed observation | `/coach/capture?mode=note` | CM05.01–06, CM08.05, CM14.04 | ● |
-| Capture: Huddle voice note to draft observation | Huddle sheet | CM05.03–06 | ● real Web Speech API where supported; labelled sample note otherwise |
+| Capture: dit (companion) voice note to draft observation | dit (companion) sheet | CM05.03–06 | ● real Web Speech API where supported; labelled sample note otherwise |
 | Capture: video record/upload, review, attach, upload, background, failure | `/coach/capture?mode=video` | CM10.01–11, CM08.06, CM14.05–06 | ◐ real camera/file pick; upload and processing simulated |
 | Video review: scrub, timestamp comments, edit, share selected, withdraw, re-link | `/coach/video/:id` | CM11.01–06, CM10.12 | ◐ real playback for local files; fixtures have no media |
 | Tasks and handovers list | `/coach/tasks` | CM08.01, CM09 | ● |
@@ -57,7 +57,7 @@ Each screen maps back to its flow codes from [`context/02-flow-registry.md`](con
 | Home: focus, latest comment, attendance, milestone, competition | `/parent` | PA02.01–07 | ● |
 | Progress: focus/status, family timeline, milestones, older reports | `/parent/progress` | PA03.01–06 | ● |
 | Notifications with withdrawn fallback | `/parent/notifications` | PA04.01, XS03.03 | ● |
-| Report reader: deep-link revalidation, corrected/withdrawn, video notes, Huddle explainer | `/parent/report/:id` | PA04.02–07, XS07.S07–08 | ● |
+| Report reader: deep-link revalidation, corrected/withdrawn, video notes, dit (companion) explainer | `/parent/report/:id` | PA04.02–07, XS07.S07–08 | ● |
 | Schedule: attendance, session count, upcoming, competition changes | `/parent/schedule` | PA05.01–05 | ● |
 
 ## Athlete App: `#/athlete`
@@ -67,7 +67,7 @@ Each screen maps back to its flow codes from [`context/02-flow-registry.md`](con
 | Access: enabled, own login, parent device, ages up, changes academy | `/athlete/access` | AT01.01–06 | ◐ sign-in simulated |
 | Focus home: focus, goal, next practice, coach tip, milestones, competition | `/athlete` | AT02.01–06 | ● |
 | Practice: drill, goal, video, mark done, assignment changed | `/athlete/practice` | AT03.01–06 | ● |
-| Feedback list and detail: timestamp comments, Huddle moment explainer, withdrawn | `/athlete/feedback/:id?` | AT04.01–06, XS03.04–05 | ● |
+| Feedback list and detail: timestamp comments, dit (companion) moment explainer, withdrawn | `/athlete/feedback/:id?` | AT04.01–06, XS03.04–05 | ● |
 | Progress: status per area, achieved/reopened, milestones, timeline | `/athlete/progress` | AT05.01–06 | ● |
 
 ## Cross-system
@@ -87,3 +87,27 @@ Each screen maps back to its flow codes from [`context/02-flow-registry.md`](con
 - **Detailed exception and review cases.** The 412 exceptions and 624 review cases sit in `flows/*.md`, which weren't supplied. The shared state set covers the common ones.
 - **Real sign-in and auth failure** (CM01.01, XS07.S03). Persona switching stands in.
 - **Profile sync conflict** (XS04.S05).
+
+## ditdit additions: companion and Dit Score
+
+| Screen / element | Route | Flows | Status |
+|---|---|---|---|
+| Companion first-run intro (per app) | Sheet on first visit; `/athlete?intro=1` | Flow A | ● |
+| Companion presence: compact face, nudge, quiet mode, minimise | All mobile apps; "Ask dit" on web | Flows A–F | ● |
+| Athlete home with Dit Score hero, last-session card, nudge | `/athlete` | AT02, Flows B–D | ● |
+| Athlete session summary (guided) | `/athlete/session/:id` | Flow B, AT04 | ● |
+| Dit Score: score, trend, breakdown, next steps, coach context, milestones, visibility | `/athlete/score` | Flow C | ● illustrative method |
+| Compare: me vs me, squad progress, academy | `/athlete/score/compare` | Flow G | ● |
+| Milestone celebration and share request | Sheet on home; `/athlete?milestone=1` | Flow D | ◐ sharing destinations simulated |
+| Coach: athlete-friendly feedback approval | dit canvas after saving a voice note | Flow E | ● |
+| Coach: Dit Score input review, confirm and pause | `/coach/athlete/:id/score` | Score validation | ● |
+| Parent: Dit Score card, plain explanation, share approvals | `/parent` | Flows F, D | ● |
+| Web: Dit Score governance | `/web/academy` | Score governance | ● |
+| Web: passport score chip | `/web/athletes/:id` | MW07 | ● |
+| Explorations 1–6 | `#/explore` | Brand, avatar, canvas, score | ● |
+
+**Navigation impact**
+- The Athlete bottom bar gains a fifth tab, **Dit Score** (shown as ··).
+- No new tabs for coach or parent.
+- The score chip appears in headers rather than as navigation.
+- The companion stays a floating face above navigation.

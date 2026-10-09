@@ -4,14 +4,14 @@ import { useStore } from '../../store/store';
 import { TODAY } from '../../data/fixtures';
 import { athleteById, areaById, batchById, fmtDate, locationName, relDay, daysUntil } from '../../store/selectors';
 import { StatusBadge, Banner, StateBlock, FlowCode } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { CoachHeader, CoachGate } from './parts';
 import { useCoach } from './useCoach';
 
 export function Today() {
   const { db } = useStore();
   const c = useCoach();
-  useHuddleContext({ surface: 'coach', title: `Today’s work · ${c.academy.name}`, prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: `Today’s work · ${c.academy.name}`, prompts: ['What can you help with?'] });
 
   const mySessions = db.sessions
     .filter((s) => s.date === TODAY && s.status !== 'cancelled')
@@ -78,7 +78,7 @@ export function Today() {
                   </div>
                   <div className="grow stack gap-1" style={{ padding: '14px 16px' }}>
                     <div className="row between gap-2">
-                      <span className="xs strong" style={{ color: 'var(--forest-600)' }}>{batch.name}</span>
+                      <span className="xs strong" style={{ color: 'var(--role-600)' }}>{batch.name}</span>
                       <StatusBadge status={s.status === 'in_progress' ? 'in_progress' : s.status} label={s.status === 'in_progress' ? 'Live' : undefined} />
                     </div>
                     <span className="strong">{s.title}</span>
@@ -97,7 +97,7 @@ export function Today() {
               {reassess.map((r) => (
                 <li key={r.id}>
                   <Link to={`/coach/reassess/${r.id}`} className="list-row">
-                    <Flag size={18} color="var(--forest-600)" aria-hidden />
+                    <Flag size={18} color="var(--role-600)" aria-hidden />
                     <span className="grow stack">
                       <span className="small strong">Reassess {athleteById(db, r.athleteId)?.name}</span>
                       <span className="xs muted">{areaById(db, r.areaId)?.title}</span>
@@ -109,7 +109,7 @@ export function Today() {
               {tasks.map((t) => (
                 <li key={t.id}>
                   <Link to={`/coach/tasks/${t.id}`} className="list-row">
-                    <ClipboardList size={18} color="var(--forest-600)" aria-hidden />
+                    <ClipboardList size={18} color="var(--role-600)" aria-hidden />
                     <span className="grow stack">
                       <span className="small strong">{t.title}</span>
                       <span className="xs muted">{athleteById(db, t.athleteId)?.name} · due {daysUntil(t.due) === 0 ? 'today' : fmtDate(t.due)}</span>
@@ -121,7 +121,7 @@ export function Today() {
               {handovers.map((h) => (
                 <li key={h.id}>
                   <Link to={`/coach/handover/${h.id}`} className="list-row">
-                    <ArrowRightLeft size={18} color="var(--forest-600)" aria-hidden />
+                    <ArrowRightLeft size={18} color="var(--role-600)" aria-hidden />
                     <span className="grow stack">
                       <span className="small strong">Handover: {athleteById(db, h.athleteId)?.name}</span>
                       <span className="xs muted">From {db.coaches.find((x) => x.id === h.fromId)?.name}</span>

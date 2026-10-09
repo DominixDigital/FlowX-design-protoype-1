@@ -1,15 +1,15 @@
-# FlowX prototype
+# ditdit prototype
 
-A clickable prototype of FlowX, an operating system for a sports academy. It has four apps that share one data store:
+A clickable prototype of ditdit, an operating system for a sports academy. It has four apps that share one data store:
 
 | Surface | Route | Theme |
 |---|---|---|
-| Management Web | `#/web` | Chalk |
-| Coach Mobile | `#/coach` | Chalk |
-| Parent App | `#/parent` | Chalk |
-| Athlete App | `#/athlete` | Floodlit |
+| Academy web | `#/web` | Coach teal |
+| Coach mobile | `#/coach` | Coach teal |
+| Parent app | `#/parent` | Parent lime |
+| Athlete app | `#/athlete` | Athlete grey + charcoal |
 
-**Huddle** is a context-aware AI layer that answers with interface objects instead of chat bubbles.
+**dit** is the ditdit companion: a two-dot avatar and a context-aware layer that answers with interface objects instead of chat bubbles. The **Dit Score** is a proposed development score with an illustrative method.
 
 ```bash
 npm install
@@ -21,14 +21,19 @@ node scripts/e2e.mjs http://127.0.0.1:5173   # cross-surface journey check (need
 ## Start here
 
 1. **`#/`** has a launcher with the signature loop. It is about 3 minutes and touches all four apps.
-2. **`#/explore`** has the three visual directions, their scoring, and the synthesis decision.
+2. **`#/explore`** has the ditdit explorations: brand, three companion concepts, conversational canvas, three score visualisations and home integration. `#/explore/v1` keeps the FlowX-era directions.
 3. **Prototype controls** (bottom-left) simulate offline, slow network, failed saves, lost confirmations, sync conflicts, and server-side changes such as cancelled tasks, removed access, withdrawn feedback, moved fixtures and removed guardians. **Reset all demo data** restores the fixtures.
 
 ## Docs
 
 - [`docs/01-discovery.md`](docs/01-discovery.md): product understanding, roles, journeys, AI opportunities, assumptions.
 - [`docs/02-screen-inventory.md`](docs/02-screen-inventory.md): every screen mapped to its flow codes, with honest status.
-- [`docs/03-design-system.md`](docs/03-design-system.md): tokens, modes, components, Huddle rules.
+- [`docs/03-design-system.md`](docs/03-design-system.md): tokens, modes, components, companion rules.
+- [`docs/04-ditdit-evolution.md`](docs/04-ditdit-evolution.md): **start here for ditdit**. Rebrand impact, avatar and score directions, flow map, integrated loop, open decisions.
+- [`docs/05-dit-score-model.md`](docs/05-dit-score-model.md): score information model and validation needs.
+- [`docs/06-companion-and-score-flows.md`](docs/06-companion-and-score-flows.md): Flows A–G with entry, action, response, AI, data, permissions, success, failure, edge cases, exit.
+- [`docs/07-colour-system.md`](docs/07-colour-system.md): five-colour palette, scales, contrast, role tokens.
+- [`docs/08-dependencies.md`](docs/08-dependencies.md): what needs backend, AI or sports-expert validation.
 - [`docs/context/`](docs/context): the supplied flow and IA context pack, kept unchanged.
 - [`src/data/policy.ts`](src/data/policy.ts): every unresolved product rule as a labelled assumption.
 
@@ -45,8 +50,8 @@ node scripts/e2e.mjs http://127.0.0.1:5173   # cross-surface journey check (need
 - **Simulated:**
   - The network, the media server (upload and processing progress) and notification delivery.
   - Sign-in and account creation.
-  - Huddle responses. These are deterministic logic over the fixture records, and the UI says so. No AI model is connected.
-- **Not shown:** performance telemetry such as speeds or ratings. The flows don't define it, so every number on screen comes from a recorded attendance, note, goal or practice log.
+  - dit responses. These are deterministic logic over the fixture records, and the UI says so. No AI model is connected.
+- **Not shown:** performance telemetry such as speeds or ratings. Every number on screen comes from a recorded attendance, note, goal or practice log. The Dit Score combines those records with an illustrative, unvalidated method, and is labelled that way.
 
 ## Stack
 

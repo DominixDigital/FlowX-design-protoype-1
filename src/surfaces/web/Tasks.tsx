@@ -6,7 +6,7 @@ import { TODAY } from '../../data/fixtures';
 import { areaById, athleteById, coachById, fmtDate, observationsFor } from '../../store/selectors';
 import type { Task, TaskStatus } from '../../data/types';
 import { Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { Drawer, PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -25,7 +25,7 @@ export function TasksPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const creating = params.get('new') === '1';
   const task = db.tasks.find((t) => t.id === taskId);
-  useHuddleContext(task ? { surface: 'web', title: `Task · ${task.title}`, athleteId: task.athleteId, prompts: ['Summarise recent sessions'] } : { surface: 'web', title: 'Coach tasks', prompts: ['What can you help with?'] });
+  useCompanionContext(task ? { surface: 'web', title: `Task · ${task.title}`, athleteId: task.athleteId, prompts: ['Summarise recent sessions'] } : { surface: 'web', title: 'Coach tasks', prompts: ['What can you help with?'] });
 
   const reviewable = db.tasks.filter((t) => t.status === 'completed' || t.status === 'blocked');
 

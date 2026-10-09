@@ -1,12 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Link, Route, Routes, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Home, TrendingUp, FileText, CalendarDays, Bell, ChevronRight, Trophy, Medal, CalendarCheck, Ban, MessageSquareQuote } from 'lucide-react';
 import { useStore } from '../../store/store';
 import { athleteById, attendanceFor, currentFocus, fmtDate, timelineFor, relDay, batchById } from '../../store/selectors';
 import { PhoneStage, StatusBar, MobileNav, BackLink } from '../../components/chrome';
 import { Avatar, Banner, Button, Field, FlowCode, StateBlock, Timeline, Assumption, StatusBadge } from '../../components/ui';
 import { ReportView } from '../../components/ReportView';
-import { HuddleCanvas, SeamButton, useHuddleContext } from '../../huddle/Huddle';
+import { CompanionCanvas, CompanionIntro, SeamButton, useCompanion, useCompanionContext } from '../../companion/Companion';
+import { ScoreDiscs, ScoreBreakdown } from '../../score/ScoreViz';
+import { computeDitScore, scoreChange } from '../../score/ditScore';
+import { ageOn } from '../../store/selectors';
+import { nowISO } from '../../store/store';
 
 const ChildCtx = createContext<{ childId: string; setChildId: (id: string) => void }>({ childId: '', setChildId: () => {} });
 
@@ -20,7 +24,10 @@ function useParent() {
 
 export function ParentApp() {
   const p = useParent();
+  const [params] = useSearchParams();
   const [childId, setChildId] = useState(p.childIds[0] ?? '');
+  const wanted = params.get('child');
+  useEffect(() => { if (wanted) setChildId(wanted); }, [wanted]);
   const active = p.childIds.includes(childId) ? childId : p.childIds[0] ?? '';
   return (
     <PhoneStage
@@ -30,6 +37,8 @@ export function ParentApp() {
       journeys={[
         { label: 'Invitation and account', to: '/parent/onboarding', codes: 'PA01.01–03' },
         { label: 'Home overview', to: '/parent', codes: 'PA02' },
+        { label: 'Dit Score in plain words', to: '/parent?child=a-kabir', codes: 'Flow F' },
+        { label: 'Approve a share request', to: '/parent?child=a-tara', codes: 'Flow D' },
         { label: 'Corrected report (deep link)', to: '/parent/report/rep-tara-sep', codes: 'PA04 · XS03.03' },
         { label: 'Progress history', to: '/parent/progress', codes: 'PA03' },
         { label: 'Attendance and competitions', to: '/parent/schedule', codes: 'PA05' },
@@ -37,7 +46,7 @@ export function ParentApp() {
       ]}
     >
       <ChildCtx.Provider value={{ childId: active, setChildId }}>
-        <div className="m-app" data-theme="chalk">
+        <div className="m-app" data-theme="chalk" data-role="parent">
           <StatusBar />
           <main className="m-body" id="main" tabIndex={-1}>
             <Routes>
@@ -57,7 +66,8 @@ export function ParentApp() {
             { to: '/parent/reports', label: 'Reports', icon: <FileText size={20} /> },
             { to: '/parent/schedule', label: 'Schedule', icon: <CalendarDays size={20} /> },
           ]} />
-          <HuddleCanvas variant="sheet" />
+          <CompanionCanvas variant="sheet" />
+          <CompanionIntro surface="parent" />
         </div>
       </ChildCtx.Provider>
     </PhoneStage>
@@ -80,7 +90,7 @@ function ChildBar() {
             </button>
           ))}
         </div>
-      ) : <span className="grow strong">{athleteById(db, childId)?.name ?? 'FlowX'}</span>}
+      ) : <span className="grow strong">{athleteById(db, childId)?.name ?? 'ditdit'}</span>}
       <Link to="/parent/notifications" className="btn btn-icon btn-sm" aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`} style={{ position: 'relative' }}>
         <Bell size={18} />
         {unread > 0 && <span style={{ position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, background: 'var(--err)', color: '#fff', fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{unread}</span>}
@@ -108,7 +118,7 @@ function ParentHome() {
   const p = useParent();
   const { childId } = useContext(ChildCtx);
   const a = athleteById(db, childId);
-  useHuddleContext(a ? { surface: 'parent', title: `${a.name.split(' ')[0]} · Home`, athleteId: a.id, reportId: db.reports.find((r) => r.athleteId === a.id && (r.status === 'published' || r.status === 'corrected'))?.id, prompts: ['Explain this report in plain words'] } : null);
+  useCompanionContext(a ? { surface: 'parent', title: `${a.name.split(' ')[0]} · Home`, athleteId: a.id, reportId: db.reports.find((r) => r.athleteId === a.id && (r.status === 'published' || r.status === 'corrected'))?.id, prompts: ['What does the Dit Score mean?', 'Explain this report in plain words'] } : null);
   if (!a) return <><ChildBar /><NoChild /></>;
   const first = a.name.split(' ')[0];
   const { area } = currentFocus(db, a.id);
@@ -126,14 +136,17 @@ function ParentHome() {
         <FlowCode codes="PA02.01–02.02" />
       </section>
 
+      <ShareRequests athleteId={a.id} />
       <section className="m-section card" aria-labelledby="pf-h" style={{ borderWidth: 1.5, borderColor: 'var(--line-strong)' }}>
         <h2 id="pf-h" className="small strong muted">What the coach is working on <FlowCode codes="PA02.03" /></h2>
         {area ? <p className="display display-md" style={{ marginTop: 8 }}><span className="mark">{area.title}</span></p> : <p className="small" style={{ marginTop: 8 }}>No current focus has been shared yet.</p>}
         {area && <p className="small muted" style={{ marginTop: 8 }}>Since {fmtDate(area.openedAt, { day: 'numeric', month: 'long' })}. Progress is shared in reports after each reassessment.</p>}
       </section>
 
+      <ParentScoreCard athleteId={a.id} />
+
       {latest?.comment && (
-        <Link to={`/parent/report/${latest.id}`} className="m-section card card-link" style={{ display: 'block', borderLeft: '4px solid var(--forest-700)' }}>
+        <Link to={`/parent/report/${latest.id}`} className="m-section card card-link" style={{ display: 'block', borderLeft: '4px solid var(--role-700)' }}>
           <p className="xs strong muted row gap-1"><MessageSquareQuote size={14} /> Latest from the coach <FlowCode codes="PA02.04" /></p>
           <p className="small" style={{ marginTop: 6 }}>“{latest.comment.length > 140 ? `${latest.comment.slice(0, 140)}…` : latest.comment}”</p>
           <p className="xs muted" style={{ marginTop: 6 }}>{latest.period} report{latest.status === 'corrected' ? ' · corrected' : ''}</p>
@@ -147,17 +160,17 @@ function ParentHome() {
           <span className="metric-basis">recorded sessions <FlowCode codes="PA02.06" /></span>
         </Link>
         {ms ? (
-          <Link to="/parent/progress" className="metric card-link" style={{ background: 'var(--lime-400)', borderColor: 'var(--lime-400)' }}>
+          <Link to="/parent/progress" className="metric card-link" style={{ background: 'var(--hl)', borderColor: 'var(--hl)' }}>
             <span className="metric-label row gap-1"><Trophy size={14} /> Milestone</span>
             <span className="small strong">{ms.title}</span>
-            <span className="metric-basis" style={{ color: 'var(--ink-700)' }}>{fmtDate(ms.date)} <FlowCode codes="PA02.05" /></span>
+            <span className="metric-basis" style={{ color: 'var(--char-400)' }}>{fmtDate(ms.date)} <FlowCode codes="PA02.05" /></span>
           </Link>
         ) : <div className="metric"><span className="metric-label">Milestones</span><span className="small muted">None yet</span></div>}
       </section>
 
       {comp && (
         <Link to="/parent/schedule" className="m-section card card-link row gap-3">
-          <Medal size={22} color="var(--court-600)" />
+          <Medal size={22} color="var(--role-700)" />
           <span className="grow stack"><span className="small strong">{comp.name}</span><span className="xs muted">{fmtDate(comp.date, { weekday: 'short', day: 'numeric', month: 'short' })} · {comp.venue}</span>{comp.status === 'changed' && <span className="xs" style={{ color: 'var(--warn)' }}>Changed: {comp.change}</span>}</span>
           <ChevronRight size={16} />
         </Link>
@@ -171,7 +184,7 @@ function Progress() {
   const { db } = useStore();
   const { childId } = useContext(ChildCtx);
   const a = athleteById(db, childId);
-  useHuddleContext(a ? { surface: 'parent', title: `${a.name.split(' ')[0]} · Progress`, athleteId: a.id, reportId: db.reports.find((r) => r.athleteId === a.id && (r.status === 'published' || r.status === 'corrected'))?.id, prompts: ['Explain this report in plain words'] } : null);
+  useCompanionContext(a ? { surface: 'parent', title: `${a.name.split(' ')[0]} · Progress`, athleteId: a.id, reportId: db.reports.find((r) => r.athleteId === a.id && (r.status === 'published' || r.status === 'corrected'))?.id, prompts: ['Explain this report in plain words'] } : null);
   if (!a) return <><ChildBar /><NoChild /></>;
   const areas = db.areas.filter((x) => x.athleteId === a.id);
   const lastApproved = db.reassessments.filter((r) => r.athleteId === a.id && r.status === 'approved').sort((x, y) => (y.submittedAt ?? '').localeCompare(x.submittedAt ?? ''))[0];
@@ -208,7 +221,7 @@ function Reports() {
   const { db } = useStore();
   const { childId } = useContext(ChildCtx);
   const a = athleteById(db, childId);
-  useHuddleContext(a ? { surface: 'parent', title: 'Reports', athleteId: a.id, prompts: ['What can you help with?'] } : null);
+  useCompanionContext(a ? { surface: 'parent', title: 'Reports', athleteId: a.id, prompts: ['What can you help with?'] } : null);
   if (!a) return <><ChildBar /><NoChild /></>;
   const list = db.reports.filter((r) => r.athleteId === a.id && ['published', 'corrected', 'withdrawn'].includes(r.status));
   return (
@@ -235,7 +248,7 @@ function ReportReader() {
   const { setChildId } = useContext(ChildCtx);
   const r = db.reports.find((x) => x.id === id);
   const [video, setVideo] = useState(false);
-  useHuddleContext(r ? { surface: 'parent', title: `${athleteById(db, r.athleteId)?.name.split(' ')[0]}’s ${r.period} report`, athleteId: r.athleteId, reportId: r.id, prompts: ['Explain this report in plain words'] } : null);
+  useCompanionContext(r ? { surface: 'parent', title: `${athleteById(db, r.athleteId)?.name.split(' ')[0]}’s ${r.period} report`, athleteId: r.athleteId, reportId: r.id, prompts: ['Explain this report in plain words'] } : null);
 
   const allowed = !!r && p.childIds.includes(r.athleteId);
   const visible = r && ['published', 'corrected', 'withdrawn'].includes(r.status);
@@ -279,7 +292,7 @@ function Schedule() {
   const { db } = useStore();
   const { childId } = useContext(ChildCtx);
   const a = athleteById(db, childId);
-  useHuddleContext(a ? { surface: 'parent', title: 'Schedule', athleteId: a.id, prompts: ['What can you help with?'] } : null);
+  useCompanionContext(a ? { surface: 'parent', title: 'Schedule', athleteId: a.id, prompts: ['What can you help with?'] } : null);
   if (!a) return <><ChildBar /><NoChild /></>;
   const att = attendanceFor(db, a.id);
   const comps = db.competitions.filter((c) => c.athleteIds.includes(a.id)).sort((x, y) => x.date.localeCompare(y.date));
@@ -327,7 +340,7 @@ function Schedule() {
 function Notifications() {
   const { db, update } = useStore();
   const p = useParent();
-  useHuddleContext({ surface: 'parent', title: 'Notifications', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'parent', title: 'Notifications', prompts: ['What can you help with?'] });
   const list = db.notifications.filter((n) => n.personId === p.person.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return (
     <>
@@ -342,7 +355,7 @@ function Notifications() {
             return (
               <li key={n.id}>
                 <Link to={n.route} className="list-row" onClick={() => update((d) => { const x = d.notifications.find((y) => y.id === n.id); if (x) x.read = true; })}>
-                  <span style={{ width: 8, height: 8, borderRadius: 4, background: n.read ? 'transparent' : 'var(--forest-600)', flex: 'none' }} aria-label={n.read ? undefined : 'Unread'} />
+                  <span style={{ width: 8, height: 8, borderRadius: 4, background: n.read ? 'transparent' : 'var(--role-600)', flex: 'none' }} aria-label={n.read ? undefined : 'Unread'} />
                   <span className="grow stack"><span className="small strong">{n.title}</span><span className="xs muted">{gone ? <><Ban size={11} style={{ display: 'inline' }} /> This report was withdrawn</> : n.body}</span></span>
                   <ChevronRight size={16} />
                 </Link>
@@ -365,7 +378,7 @@ function Onboarding() {
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [touched, setTouched] = useState(false);
-  useHuddleContext({ surface: 'parent', title: 'Getting started', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'parent', title: 'Getting started', prompts: ['What can you help with?'] });
   const codeOk = code.trim().toUpperCase() === 'VCA-KABIR';
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
   const kabir = athleteById(db, 'a-kabir')!;
@@ -389,7 +402,7 @@ function Onboarding() {
           <Field id="em" label="Email" error={touched && !emailOk ? 'Enter a valid email address.' : ''}><input id="em" type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></Field>
           <Field id="pw" label="Password" hint="At least 8 characters" error={touched && pw.length < 8 ? 'Use at least 8 characters.' : ''}><input id="pw" type="password" className="input" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" /></Field>
           <Button type="submit" variant="primary" size="lg" block>Create account</Button>
-          <p className="xs muted">Already have a FlowX account, for example as a coach? Use the same email and your roles are kept separate.</p>
+          <p className="xs muted">Already have a ditdit account, for example as a coach? Use the same email and your roles are kept separate.</p>
         </form>
       )}
       {step === 2 && (
@@ -405,3 +418,66 @@ function Onboarding() {
   );
 }
 
+
+/** Flow F — the Dit Score explained for a parent. Under 16, guardians always see it (assumption DS-07). */
+function ParentScoreCard({ athleteId }: { athleteId: string }) {
+  const { db } = useStore();
+  const { openCompanion } = useCompanion();
+  const a = athleteById(db, athleteId)!;
+  const first = a.name.split(' ')[0];
+  const prefs = db.scorePrefs[athleteId];
+  const visible = ageOn(a.born) < 16 || !prefs || prefs.visibility === 'family' || prefs.visibility === 'squad';
+  const st = computeDitScore(db, athleteId);
+  const ch = scoreChange(db, athleteId);
+  const [open, setOpen] = useState(false);
+  if (!visible) return <div className="m-section"><StateBlock kind="permission" title={`${first} keeps the Dit Score private`} body="Over 16, athletes choose who sees their score. Reports and coach updates are still shared with you." /></div>;
+  return (
+    <section className="m-section card stack gap-3" aria-labelledby="ps-h">
+      <div className="row between">
+        <h2 id="ps-h" className="small strong muted">{first}’s Dit Score</h2>
+        <span className="badge badge-outline">Illustrative</span>
+      </div>
+      <div className="score-hero" data-theme="floodlit" data-role="parent" style={{ justifyItems: 'center' }}>
+        <ScoreDiscs state={st} size={220} />
+        {st.kind === 'scored' && ch && <p className="small" style={{ color: 'var(--text-muted)' }}>{ch.delta >= 0 ? 'Up' : 'Down'} {Math.abs(ch.delta)} since {fmtDate(ch.since)}</p>}
+      </div>
+      <p className="small">A summary of how {first}’s development is going, built from what coaches record. It isn’t a talent rating.</p>
+      <div className="row gap-2 wrap">
+        <Button variant="primary" onClick={() => openCompanion({ ask: 'What does the Dit Score mean?' })}>Explain it simply</Button>
+        <Button variant="ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}>{open ? 'Hide details' : 'What’s in it'}</Button>
+      </div>
+      {open && (st.kind === 'scored' || st.kind === 'building') && <ScoreBreakdown state={st} audience="parent" />}
+      <FlowCode codes="Flow F" />
+    </section>
+  );
+}
+
+/** Flow D (guardian step) — under-16 milestone sharing needs a parent’s yes. */
+function ShareRequests({ athleteId }: { athleteId: string }) {
+  const { db, update, toast } = useStore();
+  const prefs = db.scorePrefs[athleteId];
+  const pending = prefs?.shareRequests.filter((r) => r.status === 'pending') ?? [];
+  if (!pending.length) return null;
+  const first = athleteById(db, athleteId)!.name.split(' ')[0];
+  const decide = (id: string, status: 'approved' | 'declined') => {
+    update((d) => { const r = d.scorePrefs[athleteId].shareRequests.find((x) => x.id === id); if (r) { r.status = status; r.at = nowISO(); } });
+    toast({ tone: 'ok', text: status === 'approved' ? `${first}’s milestone is shared with their squad.` : 'Declined. Nothing was shared.' });
+  };
+  return (
+    <section className="m-section stack gap-2">
+      {pending.map((r) => {
+        const m = db.milestones.find((x) => x.id === r.milestoneId);
+        return (
+          <div key={r.id} className="card stack gap-2" style={{ borderColor: 'var(--role-600)', borderWidth: 1.5 }}>
+            <p className="small"><strong>{first} wants to share a milestone</strong> with their squad: “{m?.title}”.</p>
+            <p className="xs muted">Shared milestones stay inside ditdit: squad and family only, with no likes or public counts.</p>
+            <div className="row gap-2">
+              <Button variant="primary" size="sm" onClick={() => decide(r.id, 'approved')}>Approve</Button>
+              <Button size="sm" onClick={() => decide(r.id, 'declined')}>Decline</Button>
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}

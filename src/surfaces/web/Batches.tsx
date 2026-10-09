@@ -4,7 +4,7 @@ import { Plus, Pencil, Archive, UserPlus, ArrowRightLeft } from 'lucide-react';
 import { useStore, uid } from '../../store/store';
 import { athleteById, batchById, coachById, currentFocus } from '../../store/selectors';
 import { Avatar, Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { Drawer, PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -24,7 +24,7 @@ export function BatchesPage() {
   const [moving, setMoving] = useState<string | null>(null);
   const [moveTo, setMoveTo] = useState('');
   const [realloc, setRealloc] = useState<{ athleteId: string; coachId: string } | null>(null);
-  useHuddleContext({ surface: 'web', title: sel ? `Batch · ${sel.name}` : 'Batches', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'web', title: sel ? `Batch · ${sel.name}` : 'Batches', prompts: ['What can you help with?'] });
 
   const roster = sel ? db.athletes.filter((a) => a.batchId === sel.id && a.status === 'active') : [];
   const coaches = db.coaches.filter((c) => c.academyId === w.academy.id && c.status === 'active');
@@ -56,7 +56,7 @@ export function BatchesPage() {
         <ul className="list card card-flush">
           {db.batches.map((b) => (
             <li key={b.id}>
-              <Link to={`/web/batches/${b.id}`} className="list-row" aria-current={b.id === sel?.id ? 'page' : undefined} style={b.id === sel?.id ? { background: 'var(--surface-2)', boxShadow: 'inset 4px 0 0 var(--forest-700)' } : undefined}>
+              <Link to={`/web/batches/${b.id}`} className="list-row" aria-current={b.id === sel?.id ? 'page' : undefined} style={b.id === sel?.id ? { background: 'var(--surface-2)', boxShadow: 'inset 4px 0 0 var(--role-700)' } : undefined}>
                 <span className="grow stack"><span className="small strong">{b.name}</span><span className="xs muted">{db.athletes.filter((a) => a.batchId === b.id && a.status === 'active').length} athletes</span></span>
                 {b.status === 'archived' && <StatusBadge status="archived" />}
               </Link>

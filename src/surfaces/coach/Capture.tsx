@@ -7,7 +7,7 @@ import { areaById, athleteById, fmtTime } from '../../store/selectors';
 import type { Video } from '../../data/types';
 import { Assumption, AssumptionNote, Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge, StateBlock } from '../../components/ui';
 import { Clip } from '../../components/art';
-import { useHuddle, useHuddleContext } from '../../huddle/Huddle';
+import { useCompanion, useCompanionContext } from '../../companion/Companion';
 import { CoachHeader, CoachGate, NotFound } from './parts';
 import { useCoach } from './useCoach';
 
@@ -46,7 +46,7 @@ export function UploadSimulator() {
 export function Capture() {
   const [params, setParams] = useSearchParams();
   const mode = params.get('mode') === 'video' ? 'video' : 'note';
-  const h = useHuddle();
+  const h = useCompanion();
   return (
     <>
       <CoachHeader title="Capture" back={params.get('athlete') ? `/coach/athlete/${params.get('athlete')}` : undefined} />
@@ -62,9 +62,9 @@ export function Capture() {
         </div>
         {mode === 'note' ? (
           <>
-            <button className="card card-link row gap-3 m-section" data-theme="floodlit" style={{ background: 'var(--ink-950)', color: 'var(--chalk-50)', borderColor: 'var(--ink-700)' }} onClick={() => h.openHuddle({ voice: true })}>
-              <span className="mic" aria-hidden style={{ background: 'var(--lime-400)', color: 'var(--ink-950)', border: 0 }}><Mic size={18} /></span>
-              <span className="grow stack"><span className="strong">Talk it instead</span><span className="xs" style={{ color: 'var(--slate-400)' }}>Huddle drafts the note. You check it, then save.</span></span>
+            <button className="card card-link row gap-3 m-section" data-theme="floodlit" style={{ background: 'var(--char-700)', color: 'var(--grey-50)', borderColor: 'var(--char-400)' }} onClick={() => h.openCompanion({ voice: true })}>
+              <span className="mic" aria-hidden style={{ background: 'var(--hl)', color: 'var(--char-700)', border: 0 }}><Mic size={18} /></span>
+              <span className="grow stack"><span className="strong">Talk it instead</span><span className="xs" style={{ color: 'var(--grey-600)' }}>dit drafts the note. You check it, then save.</span></span>
             </button>
             <NoteComposer />
           </>
@@ -90,7 +90,7 @@ function NoteComposer() {
   const [saving, setSaving] = useState(false);
   const idem = useRef(uid('idem')); // one key per composed note: retries never duplicate
 
-  useHuddleContext(athleteId ? {
+  useCompanionContext(athleteId ? {
     surface: 'coach', title: `Note · ${athleteById(db, athleteId)?.name}`, athleteId, sessionId: sessionId || undefined,
     prompts: ['Summarise recent sessions', 'What’s the next action?'],
   } : { surface: 'coach', title: 'New observation', prompts: ['What can you help with?'] });
@@ -176,7 +176,7 @@ function VideoCapture() {
   const recRef = useRef<HTMLInputElement>(null);
   const pickRef = useRef<HTMLInputElement>(null);
 
-  useHuddleContext({ surface: 'coach', title: 'Video capture', athleteId: athleteId || undefined, prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'coach', title: 'Video capture', athleteId: athleteId || undefined, prompts: ['What can you help with?'] });
 
   const onFile = (f: File | undefined) => {
     if (!f) return;
@@ -222,13 +222,13 @@ function VideoCapture() {
         <input ref={recRef} type="file" accept="video/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} />
         <input ref={pickRef} type="file" accept="video/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
         <button className="card card-link row gap-3" style={{ padding: 20 }} onClick={() => recRef.current?.click()}>
-          <Camera size={28} color="var(--forest-600)" /><span className="grow stack"><span className="strong">Record a clip</span><span className="xs muted">Opens the phone camera. On a desktop it opens a file picker.</span></span>
+          <Camera size={28} color="var(--role-600)" /><span className="grow stack"><span className="strong">Record a clip</span><span className="xs muted">Opens the phone camera. On a desktop it opens a file picker.</span></span>
         </button>
         <button className="card card-link row gap-3" style={{ padding: 20 }} onClick={() => pickRef.current?.click()}>
-          <Upload size={28} color="var(--forest-600)" /><span className="grow stack"><span className="strong">Upload an existing clip</span><span className="xs muted">From the camera roll or files</span></span>
+          <Upload size={28} color="var(--role-600)" /><span className="grow stack"><span className="strong">Upload an existing clip</span><span className="xs muted">From the camera roll or files</span></span>
         </button>
         <button className="card card-link row gap-3" style={{ padding: 20, borderStyle: 'dashed' }} onClick={() => { setFile({ url: null, name: 'demo.mp4', duration: 38, demo: true }); setStep('review'); }}>
-          <Film size={28} color="var(--slate-500)" /><span className="grow stack"><span className="strong">Use a demo clip</span><span className="xs muted">For trying the flow without a real video</span></span>
+          <Film size={28} color="var(--taupe-600)" /><span className="grow stack"><span className="strong">Use a demo clip</span><span className="xs muted">For trying the flow without a real video</span></span>
         </button>
         {!sim.online && <Banner tone="info">Offline: clips are kept on the device and queued for upload. <FlowCode codes="CM14.05–06" /></Banner>}
       </div>
@@ -324,7 +324,7 @@ export function VideoReview() {
   const mediaRef = useRef<HTMLVideoElement>(null);
   const url = id ? localMedia.get(id) : undefined;
 
-  useHuddleContext(v ? { surface: 'coach', title: `Clip · ${v.title}`, athleteId: v.athleteId, prompts: ['Summarise recent sessions'] } : null);
+  useCompanionContext(v ? { surface: 'coach', title: `Clip · ${v.title}`, athleteId: v.athleteId, prompts: ['Summarise recent sessions'] } : null);
 
   useEffect(() => {
     if (!playing || url || !v) return;

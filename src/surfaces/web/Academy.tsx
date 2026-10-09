@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { Plus, Archive, RotateCcw, Check } from 'lucide-react';
 import { useStore, uid } from '../../store/store';
 import { Assumption, Banner, Button, Field, FlowCode, StatusBadge } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { PageHead } from './parts';
 import { useWeb } from './useWeb';
 
 interface SetupDraft { step: number; name: string; city: string; location: string; sport: string; ageGroups: string }
-const KEY = 'flowx-proto-v1:setup-draft';
+const KEY = 'ditdit-proto-v2:setup-draft';
 const emptyDraft: SetupDraft = { step: 0, name: '', city: '', location: '', sport: 'Cricket', ageGroups: 'U14, U16' };
 const loadDraft = (): SetupDraft | null => { try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; } catch { return null; } };
 const saveDraft = (d: SetupDraft | null) => { try { if (d) localStorage.setItem(KEY, JSON.stringify(d)); else localStorage.removeItem(KEY); } catch { /* private mode */ } };
@@ -21,7 +21,7 @@ export function AcademyPage() {
   const [newLoc, setNewLoc] = useState('');
   const [setup, setSetup] = useState<SetupDraft | null>(null);
   const [saved, setSaved] = useState<SetupDraft | null>(loadDraft());
-  useHuddleContext({ surface: 'web', title: 'Academy settings', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'web', title: 'Academy settings', prompts: ['What can you help with?'] });
   useEffect(() => { if (setup) { saveDraft(setup); setSaved(setup); } }, [setup]);
 
   const locDup = db.academies.find((a) => a.id === ac.id)!.locations.some((l) => l.name.toLowerCase() === newLoc.trim().toLowerCase());
@@ -73,6 +73,7 @@ export function AcademyPage() {
           {locDup && <p className="xs" style={{ color: 'var(--err)' }}>A location with that name exists.</p>}
         </section>
       </div>
+      <ScoreGovernance />
       <section className="card row between wrap gap-3" style={{ marginTop: 24 }}>
         <div><h2 className="h3">Set up another academy</h2><p className="small muted">First-time setup: create the academy, add a location, configure the sport, then complete.</p></div>
         <Button onClick={() => setSetup(saved ?? emptyDraft)} disabled={!w.canManageOrg}>{saved ? 'Resume setup' : 'Start setup'}</Button>
@@ -129,5 +130,45 @@ function SetupWizard({ draft, setDraft, onDone }: { draft: SetupDraft; setDraft:
         </div>
       </section>
     </>
+  );
+}
+
+/** Academy governance for the Dit Score and comparison (head coach / owner). */
+function ScoreGovernance() {
+  const { db, update, audit, toast } = useStore();
+  const w = useWeb();
+  const st = db.scoreSettings;
+  const set = (patch: Partial<typeof st>, msg: string) => {
+    update((d) => { d.scoreSettings = { ...d.scoreSettings, ...patch }; });
+    audit(w.actorName, msg);
+    toast({ tone: 'ok', text: msg });
+  };
+  return (
+    <section className="card stack gap-4" style={{ marginTop: 24 }} aria-labelledby="gov-h">
+      <div className="row between wrap gap-2">
+        <h2 id="gov-h" className="h3">Dit Score and comparison</h2>
+        <span className="badge badge-outline">Illustrative method</span>
+      </div>
+      <label className="check-row"><input type="checkbox" checked={st.enabled} disabled={!w.canManageOrg} onChange={(e) => set({ enabled: e.target.checked }, e.target.checked ? 'Dit Scores turned on' : 'Dit Scores turned off for the academy')} /><span className="small"><strong>Show Dit Scores</strong> to athletes, families and coaches. Coaches can still pause any single score.</span></label>
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }} disabled={!w.canManageOrg || !st.enabled}>
+        <legend className="small strong" style={{ marginBottom: 6 }}>Squad progress comparison (opt-in for athletes)</legend>
+        {db.batches.filter((b) => b.status === 'active').map((b) => (
+          <label key={b.id} className="check-row"><input type="checkbox" checked={st.comparisonBatchIds.includes(b.id)} onChange={(e) => set({ comparisonBatchIds: e.target.checked ? [...st.comparisonBatchIds, b.id] : st.comparisonBatchIds.filter((x) => x !== b.id) }, `Squad comparison ${e.target.checked ? 'allowed' : 'turned off'} for ${b.name}`)} /><span className="small">{b.name}</span></label>
+        ))}
+      </fieldset>
+      <div className="w-grid w-grid-2">
+        <Field id="cmp-age" label="Comparison offered from age" hint="Below this age athletes only see their own progress.">
+          <select id="cmp-age" className="select" value={st.comparisonMinAge} disabled={!w.canManageOrg} onChange={(e) => set({ comparisonMinAge: Number(e.target.value) }, `Comparison minimum age set to ${e.target.value}`)}>
+            {[11, 12, 13, 14, 16].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </Field>
+        <Field id="rank-age" label="Positions shown from age" hint="Younger athletes see bands (top, middle, building), never a number.">
+          <select id="rank-age" className="select" value={st.rankPositionsMinAge} disabled={!w.canManageOrg} onChange={(e) => set({ rankPositionsMinAge: Number(e.target.value) }, `Rank positions from age ${e.target.value}`)}>
+            {[14, 16, 18, 99].map((n) => <option key={n} value={n}>{n === 99 ? 'Never' : n}</option>)}
+          </select>
+        </Field>
+      </div>
+      <p className="xs muted">Comparison ranks improvement within one batch and one sport, never the score itself. Cross-sport and academy-wide ranking stay off until a validated method exists.</p>
+    </section>
   );
 }

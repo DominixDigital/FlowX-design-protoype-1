@@ -3,13 +3,12 @@ import { Link, NavLink } from 'react-router-dom';
 import { Check, CloudOff, AlertTriangle, RefreshCw, SlidersHorizontal, X, ChevronLeft } from 'lucide-react';
 import { useStore } from '../store/store';
 import type { Surface } from '../data/types';
-import { Seam } from './Seam';
 
-export function Wordmark({ to = '/' }: { to?: string }) {
+/** ditdit wordmark: the tittles of the two i's are the brand's two dots (Morse "dit dit"). */
+export function Wordmark({ to = '/', size = 26 }: { to?: string; size?: number }) {
   return (
-    <Link to={to} className="wordmark" aria-label="FlowX home">
-      <Seam size={22} />
-      FlowX
+    <Link to={to} className="wordmark" aria-label="ditdit home" style={{ fontSize: size }}>
+      <span aria-hidden>d<span className="wm-i">ı<i /></span>td<span className="wm-i">ı<i /></span>t</span>
     </Link>
   );
 }
@@ -61,10 +60,10 @@ export function PhoneStage({
         <Wordmark />
         <div>
           <p className="display display-lg">{title}</p>
-          <p className="small" style={{ color: 'var(--slate-400)', marginTop: 8 }}>Phone surface · shared data with every other FlowX app</p>
+          <p className="small" style={{ color: 'var(--grey-600)', marginTop: 8 }}>Phone surface · shared data with every other ditdit app</p>
         </div>
         <div className="field">
-          <label htmlFor={`persona-${surface}`} style={{ color: 'var(--chalk-50)' }}>Signed in as</label>
+          <label htmlFor={`persona-${surface}`} style={{ color: 'var(--grey-50)' }}>Signed in as</label>
           <select
             id={`persona-${surface}`}
             className="select"
@@ -77,16 +76,16 @@ export function PhoneStage({
           >
             {personas.map((p) => <option key={p.personId} value={p.personId}>{p.label} — {p.sub}</option>)}
           </select>
-          {person && person.memberships.length > 1 && <span className="xs" style={{ color: 'var(--slate-400)' }}>This person has {person.memberships.length} roles across academies.</span>}
+          {person && person.memberships.length > 1 && <span className="xs" style={{ color: 'var(--grey-600)' }}>This person has {person.memberships.length} roles across academies.</span>}
         </div>
         <nav aria-label="Journeys">
           <p className="small strong" style={{ marginBottom: 8 }}>Jump to a journey</p>
-          <ul className="list" style={{ borderTop: '1px solid var(--ink-700)' }}>
+          <ul className="list" style={{ borderTop: '1px solid var(--char-400)' }}>
             {journeys.map((j) => (
-              <li key={j.to} style={{ borderColor: 'var(--ink-700)' }}>
-                <Link to={j.to} className="list-row" style={{ minHeight: 44, padding: '8px 0', color: 'var(--chalk-50)' }}>
+              <li key={j.to} style={{ borderColor: 'var(--char-400)' }}>
+                <Link to={j.to} className="list-row" style={{ minHeight: 44, padding: '8px 0', color: 'var(--grey-50)' }}>
                   <span className="grow small">{j.label}</span>
-                  <span className="flow-code" style={{ color: 'var(--slate-400)' }}>{j.codes}</span>
+                  <span className="flow-code" style={{ color: 'var(--grey-600)' }}>{j.codes}</span>
                 </Link>
               </li>
             ))}

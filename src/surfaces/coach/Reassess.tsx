@@ -8,7 +8,7 @@ import type { ReassessmentOutcome } from '../../data/types';
 import { Assumption, AssumptionNote, Banner, Button, Field, FlowCode, StatusBadge } from '../../components/ui';
 import { Clip } from '../../components/art';
 import { Seam } from '../../components/Seam';
-import { useHuddle, useHuddleContext } from '../../huddle/Huddle';
+import { useCompanion, useCompanionContext } from '../../companion/Companion';
 import { CoachHeader, CoachGate, NotFound } from './parts';
 import { useCoach } from './useCoach';
 
@@ -22,7 +22,7 @@ const OUTCOMES: { v: ReassessmentOutcome; label: string; desc: string }[] = [
 function Step({ n, title, codes, children, optional }: { n: number; title: string; codes: string; children: ReactNode; optional?: boolean }) {
   return (
     <li className="card" style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: 12 }}>
-      <span className="num" style={{ fontSize: '1.6rem', color: 'var(--forest-600)' }} aria-hidden>{n}</span>
+      <span className="num" style={{ fontSize: '1.6rem', color: 'var(--role-600)' }} aria-hidden>{n}</span>
       <div className="stack gap-2">
         <h2 className="small strong">{title} {optional && <span className="muted" style={{ fontWeight: 400 }}>(optional)</span>} <FlowCode codes={codes} /></h2>
         {children}
@@ -35,7 +35,7 @@ export function Reassess() {
   const { id } = useParams();
   const { db, update, audit, toast } = useStore();
   const c = useCoach();
-  const h = useHuddle();
+  const h = useCompanion();
   const r = db.reassessments.find((x) => x.id === id);
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState(r?.note ?? '');
@@ -44,7 +44,7 @@ export function Reassess() {
   const [milestone, setMilestone] = useState('');
   const [touched, setTouched] = useState(false);
 
-  useHuddleContext(r ? {
+  useCompanionContext(r ? {
     surface: 'coach', title: `Reassessment · ${athleteById(db, r.athleteId)?.name}`, athleteId: r.athleteId, reassessmentId: r.id,
     prompts: ['Brief me on the evidence', 'Compare the last two sessions'],
   } : null, { useText: { label: 'Use as reassessment note', run: (t) => setNote(t) } });
@@ -104,13 +104,13 @@ export function Reassess() {
             <button
               className="card card-link m-section row gap-3"
               data-theme="floodlit"
-              style={{ background: 'var(--ink-950)', borderColor: 'var(--ink-700)', color: 'var(--chalk-50)' }}
-              onClick={() => h.openHuddle({ ask: 'Brief me on the evidence' })}
+              style={{ background: 'var(--char-700)', borderColor: 'var(--char-400)', color: 'var(--grey-50)' }}
+              onClick={() => h.openCompanion({ ask: 'Brief me on the evidence' })}
             >
-              <span style={{ color: 'var(--lime-400)' }}><Seam state="insight" size={34} /></span>
+              <span style={{ color: 'var(--hl)' }}><Seam state="insight" size={34} /></span>
               <span className="grow stack">
                 <span className="strong">Evidence brief ready</span>
-                <span className="xs" style={{ color: 'var(--slate-400)' }}>{notes.length} notes, {vids.length} clip{vids.length === 1 ? '' : 's'} and attendance since {fmtDate(area.openedAt)}. You decide the status.</span>
+                <span className="xs" style={{ color: 'var(--grey-600)' }}>{notes.length} notes, {vids.length} clip{vids.length === 1 ? '' : 's'} and attendance since {fmtDate(area.openedAt)}. You decide the status.</span>
               </span>
             </button>
 
@@ -147,9 +147,9 @@ export function Reassess() {
                   <legend className="sr-only">Status</legend>
                   <div className="stack gap-2">
                     {OUTCOMES.map((o) => (
-                      <label key={o.v} className="card card-link row gap-3" style={{ padding: 12, borderColor: outcome === o.v ? 'var(--line-strong)' : undefined, background: outcome === o.v && o.v === 'achieved' ? 'var(--lime-400)' : undefined }}>
-                        <input type="radio" name="outcome" checked={outcome === o.v} onChange={() => setOutcome(o.v)} style={{ accentColor: 'var(--forest-700)', width: 18, height: 18 }} />
-                        <span className="grow stack"><span className="small strong">{o.label}</span><span className="xs muted" style={{ color: outcome === o.v && o.v === 'achieved' ? 'var(--ink-700)' : undefined }}>{o.desc}</span></span>
+                      <label key={o.v} className="card card-link row gap-3" style={{ padding: 12, borderColor: outcome === o.v ? 'var(--line-strong)' : undefined, background: outcome === o.v && o.v === 'achieved' ? 'var(--hl)' : undefined }}>
+                        <input type="radio" name="outcome" checked={outcome === o.v} onChange={() => setOutcome(o.v)} style={{ accentColor: 'var(--role-700)', width: 18, height: 18 }} />
+                        <span className="grow stack"><span className="small strong">{o.label}</span><span className="xs muted" style={{ color: outcome === o.v && o.v === 'achieved' ? 'var(--char-400)' : undefined }}>{o.desc}</span></span>
                       </label>
                     ))}
                   </div>

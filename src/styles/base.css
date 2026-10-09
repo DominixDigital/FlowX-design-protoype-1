@@ -68,8 +68,8 @@ svg {
   top: -60px;
   z-index: 100;
   padding: 8px 12px;
-  background: var(--lime-400);
-  color: var(--ink-950);
+  background: var(--hl);
+  color: var(--char-700);
   border-radius: var(--r-sm);
 }
 
@@ -83,8 +83,10 @@ svg {
   font-weight: 800;
   line-height: 0.92;
   letter-spacing: 0.005em;
-  text-transform: uppercase;
+  text-wrap: balance;
 }
+/* Uppercase scoreboard type is reserved for athlete and editorial surfaces; coach and parent read in sentence case. */
+[data-theme='matchday'] .display { text-transform: uppercase; }
 
 .display-xl { font-size: clamp(2.25rem, 6vw, var(--fs-4xl)); overflow-wrap: anywhere; }
 .display-lg { font-size: var(--fs-3xl); }
@@ -116,7 +118,7 @@ svg {
 .strong { font-weight: 640; }
 
 .mark {
-  background: linear-gradient(transparent 58%, var(--lime-400) 58%, var(--lime-400) 92%, transparent 92%);
+  background: linear-gradient(transparent 58%, var(--hl) 58%, var(--hl) 92%, transparent 92%);
   padding: 0 0.1em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;

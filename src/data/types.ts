@@ -252,6 +252,10 @@ export interface Competition {
 export interface Feedback {
   id: ID;
   athleteId: ID;
+  /** Session the feedback is about, when known (powers the session summary) */
+  sessionId?: ID | null;
+  /** Coach-approved athlete-friendly version drafted with the companion (Flow E) */
+  aiDrafted?: boolean;
   coachId: ID;
   text: string;
   videoId: ID | null;
@@ -269,12 +273,12 @@ export interface PracticeLog {
 export interface Notification {
   id: ID;
   personId: ID;
-  kind: 'task' | 'reassessment' | 'report' | 'feedback' | 'video' | 'assignment' | 'handover';
+  kind: 'task' | 'reassessment' | 'report' | 'feedback' | 'video' | 'assignment' | 'handover' | 'milestone' | 'share' | 'question';
   title: string;
   body: string;
   route: string;
   /** Target object for deep-link revalidation (XS03 / XS07.S08) */
-  target: { type: 'report' | 'task' | 'reassessment' | 'feedback' | 'video' | 'handover'; id: ID };
+  target: { type: 'report' | 'task' | 'reassessment' | 'feedback' | 'video' | 'handover' | 'milestone' | 'share' | 'question'; id: ID };
   createdAt: string;
   read: boolean;
 }
@@ -298,4 +302,47 @@ export interface AuditEntry {
   by: string;
   what: string;
   ref?: string;
+}
+
+/* ───────── ditdit additions ───────── */
+
+/** Who may see an athlete's Dit Score. Under-16 guardians always see it (policy assumption DS-07). */
+export type ScoreVisibility = 'private' | 'coaches' | 'family' | 'squad';
+
+export interface AthleteScorePrefs {
+  visibility: ScoreVisibility;
+  /** Opt-in to squad progress comparison (only offered where the academy enables it) */
+  comparisonOptIn: boolean;
+  /** Milestone celebrations already shown to the athlete */
+  seenMilestoneIds: ID[];
+  /** Pending or decided share requests that need a guardian (under 16) */
+  shareRequests: { id: ID; milestoneId: ID; status: 'pending' | 'approved' | 'declined'; at: string }[];
+}
+
+/** Coach review of the data that feeds a score (coach = source of truth). */
+export interface ScoreReview {
+  athleteId: ID;
+  reviewedById: ID;
+  at: string;
+  /** Coach can pause a score that looks wrong; athletes then see "paused by your coach". */
+  paused: boolean;
+  note?: string;
+}
+
+/** Academy governance for scores and comparison (set by head coach / owner). */
+export interface ScoreSettings {
+  enabled: boolean;
+  /** Batches where opt-in squad progress comparison is allowed */
+  comparisonBatchIds: ID[];
+  /** Minimum age before any comparison is offered */
+  comparisonMinAge: number;
+  /** Age from which rank positions (not just bands) may be shown */
+  rankPositionsMinAge: number;
+}
+
+export interface CompanionPrefs {
+  introSeen: boolean;
+  /** Quiet mode: no proactive nudges; the companion only answers when asked */
+  quiet: boolean;
+  dismissedNudges: string[];
 }

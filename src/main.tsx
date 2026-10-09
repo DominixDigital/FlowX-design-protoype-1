@@ -7,7 +7,8 @@ import '@fontsource-variable/instrument-sans';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
-import './styles/huddle.css';
+import './styles/companion.css';
+import './styles/score.css';
 import './styles/layout.css';
 import { App } from './App';
 

@@ -4,7 +4,7 @@ import { useStore, uid } from '../../store/store';
 import { coachById, fmtDate } from '../../store/selectors';
 import type { Coach } from '../../data/types';
 import { Assumption, Avatar, Banner, Button, ConfirmDialog, Field, FlowCode, StatusBadge } from '../../components/ui';
-import { useHuddleContext } from '../../huddle/Huddle';
+import { useCompanionContext } from '../../companion/Companion';
 import { Drawer, PageHead } from './parts';
 import { useWeb } from './useWeb';
 
@@ -18,7 +18,7 @@ export function StaffPage() {
   const [view, setView] = useState<Coach | null>(null);
   const [deactivate, setDeactivate] = useState<Coach | null>(null);
   const [reassignTo, setReassignTo] = useState('');
-  useHuddleContext({ surface: 'web', title: 'Staff', prompts: ['What can you help with?'] });
+  useCompanionContext({ surface: 'web', title: 'Staff', prompts: ['What can you help with?'] });
   const staff = db.coaches.filter((c) => c.academyId === w.academy.id);
   const holdings = (c: Coach) => ({
     athletes: db.athletes.filter((a) => a.primaryCoachId === c.id && a.status === 'active'),

@@ -22,6 +22,11 @@ export interface DB {
   feedback: typeof fx.feedback;
   practiceLogs: typeof fx.practiceLogs;
   notifications: typeof fx.notifications;
+  scoreSettings: typeof fx.scoreSettings;
+  scorePrefs: typeof fx.scorePrefs;
+  scoreReviews: typeof fx.scoreReviews;
+  /** Keyed by surface + person, e.g. "athlete:p-tara" */
+  companionPrefs: typeof fx.companionPrefs;
   queue: QueuedCommand[];
   audit: AuditEntry[];
   /** Idempotency keys the "server" has already applied */
@@ -54,7 +59,8 @@ const seed = (): DB => ({
   sessions: fx.sessions, observations: fx.observations, areas: fx.areas, goals: fx.goals, tasks: fx.tasks,
   handovers: fx.handovers, videos: fx.videos, reassessments: fx.reassessments, milestones: fx.milestones,
   reports: fx.reports, competitions: fx.competitions, feedback: fx.feedback, practiceLogs: fx.practiceLogs,
-  notifications: fx.notifications, queue: [], audit: [], applied: [],
+  notifications: fx.notifications, scoreSettings: fx.scoreSettings, scorePrefs: fx.scorePrefs,
+  scoreReviews: fx.scoreReviews, companionPrefs: fx.companionPrefs, queue: [], audit: [], applied: [],
 });
 
 const defaultPersonas: Record<Surface, Persona> = {
@@ -64,7 +70,7 @@ const defaultPersonas: Record<Surface, Persona> = {
   athlete: { personId: 'p-tara', academyId: 'ac-velocity' },
 };
 
-const STORAGE_KEY = 'flowx-proto-v1';
+const STORAGE_KEY = 'ditdit-proto-v2';
 
 function load<T>(key: string, fallback: T): T {
   try {
