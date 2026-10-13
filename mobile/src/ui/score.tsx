@@ -154,3 +154,17 @@ export function ScoreBreakdown({ state, audience = 'athlete' }: { state: ScoreSt
     </View>
   );
 }
+
+/** Signal: each input becomes a Morse mark, a dit when low stretching into a dah as it grows. */
+export function ScoreSignal({ state, showValue = true }: { state: ScoreState; showValue?: boolean }) {
+  const t = useTheme();
+  const dims = state.kind === 'scored' || state.kind === 'building' ? state.dims.filter((d) => d.def.weight !== null) : [];
+  return (
+    <View accessible accessibilityLabel={state.kind === 'scored' ? `Dit Score ${state.value}` : 'Dit Score not available'} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      {showValue ? <Text style={{ fontFamily: fonts.display, fontSize: 40, color: t.text }}>{state.kind === 'scored' ? state.value : '··'}</Text> : null}
+      <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+        {dims.map((d) => <View key={d.def.key} style={{ height: 8, borderRadius: 4, width: 8 + ((d.value ?? 0) / 100) * 28, backgroundColor: d.def.trust === 'self_reported' ? 'transparent' : t.hl, borderWidth: d.def.trust === 'self_reported' ? 1.5 : 0, borderColor: t.hl }} />)}
+      </View>
+    </View>
+  );
+}

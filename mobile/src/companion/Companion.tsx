@@ -44,6 +44,8 @@ interface CompanionState {
   setCtx: (ctx: CompanionCtx | null, actions?: CompanionActions) => void;
   openCompanion: (opts?: { ask?: string }) => void;
   close: () => void;
+  hideFab: number;
+  setHideFab: (delta: 1 | -1) => void;
   ask: (q: string, via?: Play['via']) => void;
   voiceNote: (text: string) => void;
 }
@@ -56,6 +58,8 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const [actions, setActions] = useState<CompanionActions>({});
   const [open, setOpen] = useState(false);
   const [plays, setPlays] = useState<Play[]>([]);
+  const [hideFab, setHideFabState] = useState(0);
+  const setHideFab = useCallback((d: 1 | -1) => setHideFabState((n) => Math.max(0, n + d)), []);
   const dbRef = useRef(db);
   dbRef.current = db;
   const ctxKey = useRef('');
@@ -112,10 +116,10 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
 
   const seam: Seam = plays.some((p) => p.status === 'thinking') ? 'thinking' : ctx?.reassessmentId || ctx?.reportId || ctx?.videoId ? 'insight' : 'idle';
   const value = useMemo<CompanionState>(() => ({
-    ctx, actions, open, plays, seam, setCtx, ask, voiceNote,
+    ctx, actions, open, plays, seam, setCtx, ask, voiceNote, hideFab, setHideFab,
     openCompanion: (opts) => { setOpen(true); if (opts?.ask) setTimeout(() => ask(opts.ask!, 'prompt'), 0); },
     close: () => setOpen(false),
-  }), [ctx, actions, open, plays, seam, setCtx, ask, voiceNote]);
+  }), [ctx, actions, open, plays, seam, setCtx, ask, voiceNote, hideFab, setHideFab]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -123,6 +127,12 @@ export function useCompanion() {
   const h = useContext(Ctx);
   if (!h) throw new Error('useCompanion outside provider');
   return h;
+}
+
+/** Hide the floating face while a screen has dense controls on the right edge; use <DitInline /> in its header instead. */
+export function useHideFab() {
+  const { setHideFab } = useCompanion();
+  useEffect(() => { setHideFab(1); return () => setHideFab(-1); }, [setHideFab]);
 }
 
 /** Screens declare what dit can see. Call from a screen; context follows focus. */
@@ -147,9 +157,9 @@ export function useCompanionPrefs(surface: Surface) {
 
 /** Floating face, bottom right above the tab bar. */
 export function DitFab({ bottom = 84 }: { bottom?: number }) {
-  const { openCompanion, seam, ctx } = useCompanion();
+  const { openCompanion, seam, ctx, hideFab } = useCompanion();
   const state: DitState = seam === 'thinking' ? 'thinking' : seam === 'insight' ? 'insight' : 'idle';
-  if (!ctx) return null;
+  if (!ctx || hideFab > 0) return null;
   return (
     <Pressable
       accessibilityRole="button" accessibilityLabel={`Ask dit${seam === 'insight' ? ', something relevant is ready for this screen' : ''}`}
@@ -157,6 +167,17 @@ export function DitFab({ bottom = 84 }: { bottom?: number }) {
       style={{ position: 'absolute', right: 16, bottom, width: 56, height: 56, borderRadius: 28, backgroundColor: raw.char[500], alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6 }}
     >
       <DitAvatar state={state} size={40} form="face" />
+    </Pressable>
+  );
+}
+
+/** Small face for a screen header, used where the floating one is hidden. */
+export function DitInline() {
+  const { openCompanion, seam, ctx } = useCompanion();
+  if (!ctx) return null;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel="Ask dit" onPress={() => openCompanion()} hitSlop={6} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: raw.char[500], alignItems: 'center', justifyContent: 'center' }}>
+      <DitAvatar state={seam === 'thinking' ? 'thinking' : seam === 'insight' ? 'insight' : 'idle'} size={28} form="face" />
     </Pressable>
   );
 }

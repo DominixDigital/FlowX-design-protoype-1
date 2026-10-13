@@ -1,5 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ChevronRight, Smartphone, User } from 'lucide-react-native';
 import { useStore } from 'ditcore/store/store';
 import type { Surface } from 'ditcore/data/types';
@@ -35,7 +35,8 @@ export function Launcher() {
   const go = (s: Surface, personId: string, academyId = 'ac-velocity', to = '') => {
     setPersona(s, { personId, academyId });
     const root = s === 'coach' ? 'Coach' : 'Athlete';
-    nav.navigate(root);
+    // A fresh navigator for the new person: never resume the previous person's stack.
+    nav.dispatch(CommonActions.reset({ index: 1, routes: [{ name: 'Launcher' }, { name: root }] }));
     if (to && to !== (s === 'coach' ? '/coach' : '/athlete')) setTimeout(() => goToPath(to), 0);
   };
 

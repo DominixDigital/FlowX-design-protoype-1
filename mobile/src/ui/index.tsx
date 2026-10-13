@@ -5,12 +5,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  AlertTriangle, Archive, Ban, Check, CircleDashed, CloudOff, Eye, FileClock, Info, Lock, RefreshCw, Trophy, X,
+  AlertTriangle, Archive, Ban, BookOpen, CalendarCheck, Check, CircleDashed, CloudOff, Eye, FileClock, FileText, Flag, Info, Lock, RefreshCw, Trophy, Video as VideoIcon, X,
 } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
 import { fonts, fs, radius, space } from '../theme/tokens';
 import { useStore } from 'ditcore/store/store';
-import { initials } from 'ditcore/store/selectors';
+import { fmtDate, initials, type TimelineItem } from 'ditcore/store/selectors';
+import { assumptions } from 'ditcore/data/policy';
 
 /* ───────── Text ───────── */
 
@@ -272,9 +273,6 @@ export function Pulse({ size = 8, color }: { size?: number; color?: string }) {
 }
 
 /* ───────── Timeline ───────── */
-import { BookOpen, CalendarCheck, FileText, Flag, Video as VideoIcon } from 'lucide-react-native';
-import { fmtDate } from 'ditcore/store/selectors';
-import type { TimelineItem } from 'ditcore/store/selectors';
 
 const TL_ICON = { observation: BookOpen, milestone: Trophy, reassessment: Flag, video: VideoIcon, area: Flag, report: FileText, session: CalendarCheck } as const;
 
@@ -301,4 +299,62 @@ export function Timeline({ items, empty }: { items: TimelineItem[]; empty?: stri
       })}
     </View>
   );
+}
+
+/** Destructive-action guard: centred modal with a clear cancel. */
+export function ConfirmDialog({ open, title, body, confirmLabel, tone = 'primary', onConfirm, onCancel, children }: {
+  open: boolean; title: string; body?: ReactNode; confirmLabel: string; tone?: 'primary' | 'danger'; onConfirm: () => void; onCancel: () => void; children?: ReactNode;
+}) {
+  const t = useTheme();
+  return (
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onCancel} statusBarTranslucent>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: space[5] }}>
+        <View accessibilityViewIsModal style={{ width: '100%', maxWidth: 420, backgroundColor: t.surface, borderRadius: radius.lg, padding: space[5], gap: space[3] }}>
+          <Txt variant="h2" accessibilityRole="header">{title}</Txt>
+          {body != null ? (typeof body === 'string' ? <Txt variant="small" muted>{body}</Txt> : body) : null}
+          {children}
+          <Row gap={2} style={{ justifyContent: 'flex-end' }}>
+            <Button onPress={onCancel}>Cancel</Button>
+            <Button variant={tone === 'danger' ? 'danger' : 'primary'} onPress={onConfirm}>{confirmLabel}</Button>
+          </Row>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+/** Two-state attendance switch: present / absent. */
+export function Segmented<T extends string>({ value, options, onChange, label }: { value: T | null; options: { v: T; node: ReactNode; label: string; tone?: 'ok' | 'err' }[]; onChange: (v: T) => void; label: string }) {
+  const t = useTheme();
+  return (
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', borderRadius: radius.sm, borderWidth: 1, borderColor: t.line, overflow: 'hidden' }}>
+      {options.map((o, i) => {
+        const on = value === o.v;
+        return (
+          <Pressable key={o.v} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={o.label} onPress={() => onChange(o.v)}
+            style={{ width: 48, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? (o.tone === 'err' ? t.errBg : t.okBg) : 'transparent', borderLeftWidth: i ? 1 : 0, borderLeftColor: t.line }}>
+            {o.node}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Pick one option from a short list (stands in for <select> and segmented controls). */
+export function ChoiceGroup<T extends string>({ value, onChange, options, none, label }: { value: T | ''; onChange: (v: T | '') => void; options: { v: T; label: string }[]; none?: string; label?: string }) {
+  return (
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      {none != null ? <Chip selected={value === ''} onPress={() => onChange('')}>{none}</Chip> : null}
+      {options.map((op) => <Chip key={op.v} selected={value === op.v} onPress={() => onChange(op.v)}>{op.label}</Chip>)}
+    </View>
+  );
+}
+
+/** An unresolved product rule shown honestly where it applies. */
+export function AssumptionNote({ code }: { code: string }) {
+  const t = useTheme();
+  const a = assumptions[code];
+  if (!a) return null;
+  return <Txt variant="xs" color={t.warn}><Txt variant="xs" strong color={t.warn}>Assumption {a.code}</Txt> (“{a.marker}”): {a.assumption}</Txt>;
 }

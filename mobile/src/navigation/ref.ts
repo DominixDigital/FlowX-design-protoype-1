@@ -40,10 +40,12 @@ export function goToPath(path: string, navigate?: Nav) {
     if (a === 'session' && b && c === 'wrap') return stack('Coach', 'WrapUp', { id: b });
     if (a === 'session' && b) return stack('Coach', 'SessionDetail', { id: b });
     if (a === 'athlete' && b && c === 'score') return stack('Coach', 'CoachScore', { id: b });
+    if (a === 'athlete' && b && c === 'area') return stack('Coach', 'NewArea', { id: b });
     if (a === 'athlete' && b) return stack('Coach', 'AthleteContext', { id: b, session: q.get('session') ?? undefined });
     if (a === 'reassess' && b) return stack('Coach', 'Reassess', { id: b });
-    if (a === 'goal' && b) return stack('Coach', 'GoalEditor', { id: b });
+    if (a === 'goal' && b) return stack('Coach', 'GoalEditor', { id: b, area: q.get('area') ?? undefined });
     if (a === 'handover' && b === 'new') return stack('Coach', 'HandoverNew', { athleteId: q.get('athlete') ?? undefined });
+    if (a === 'handover' && b) return stack('Coach', 'HandoverDetail', { id: b });
     if (a === 'capture') return stack('Coach', 'Capture', { mode: q.get('mode') ?? 'note' });
     if (a === 'sync') return stack('Coach', 'Sync');
     if (a === 'context') return stack('Coach', 'Context');

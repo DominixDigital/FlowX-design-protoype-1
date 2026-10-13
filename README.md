@@ -24,6 +24,10 @@ node scripts/e2e.mjs http://127.0.0.1:5173   # cross-surface journey check (need
 2. **`#/explore`** has the ditdit explorations: brand, three companion concepts, conversational canvas, three score visualisations and home integration. `#/explore/v1` keeps the FlowX-era directions.
 3. **Prototype controls** (bottom-left) simulate offline, slow network, failed saves, lost confirmations, sync conflicts, and server-side changes such as cancelled tasks, removed access, withdrawn feedback, moved fixtures and removed guardians. **Reset all demo data** restores the fixtures.
 
+## Native app
+
+[`mobile/`](mobile) is an Expo (React Native) version of the Athlete and Coach apps that shares the data, store, score and dit logic with this web build. See [`mobile/README.md`](mobile/README.md).
+
 ## Docs
 
 - [`docs/01-discovery.md`](docs/01-discovery.md): product understanding, roles, journeys, AI opportunities, assumptions.
