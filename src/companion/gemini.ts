@@ -52,6 +52,7 @@ export async function askGemini(db: DB, ctx: CompanionCtx, question: string): Pr
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
+      signal: AbortSignal.timeout(12000),
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ question, audience: ctx.surface === 'web' ? 'coach' : ctx.surface, facts: groundingFacts(db, ctx) }),
     });

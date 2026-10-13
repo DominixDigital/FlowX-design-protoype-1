@@ -421,6 +421,13 @@ export function sessionInsight(db: DB, ctx: CompanionCtx, step: 'open' | 'improv
 export function ditdit(db: DB, ctx: CompanionCtx, q: string): CompanionObject[] | null {
   const s = q.toLowerCase();
   const athleteId = ctx.athleteId;
+  // Instant answers for common openers: no model, no wait.
+  const short = s.trim().split(/\s+/).length <= 4;
+  if (short && /^(hi|hello|hey|hiya|yo|greetings|good (morning|afternoon|evening))\b/.test(s.trim()))
+    return [{ type: 'say', text: ROLE_GREETING[ctx.surface === 'web' ? 'coach' : ctx.surface], mood: 'idle' }, capabilities(ctx)];
+  if (/\b(who|what) are you\b|are you (an )?(ai|bot|human)|what is dit\b/.test(s))
+    return [{ type: 'say', text: 'I’m dit, the ditdit companion. I show what your coaches have recorded. Most answers are built from those records, and open questions can be answered by an AI model, always labelled. Your coach is the source of truth.', mood: 'explaining' }];
+  if (short && /\b(thanks|thank you|cheers)\b/.test(s)) return [{ type: 'say', text: 'Any time. Ask me whenever you like.', mood: 'idle' }];
   if (/counts? towards|what counts|how is .*score|method/.test(s)) return scoreMethod();
   if (athleteId && /\bdit ?score\b|\b(my|the|your|his|her) score\b/.test(s)) {
     if (/why|change/.test(s)) return explainScore(db, ctx, athleteId, 'why');

@@ -79,7 +79,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       if (!then) { setPlays((p) => p.map((x) => (x.id === id ? { ...x, status: 'done', ...out } : x))); return; }
       // Rule router had no answer: try Gemini; keep dit "thinking" until it replies, fall back to the rule-based notice on any failure.
       then().then((ai) => setPlays((p) => p.map((x) => (x.id === id ? { ...x, status: 'done', ...out, objects: ai ?? out.objects ?? [] } : x))));
-    }, 650);
+    }, 350);
   }, []);
 
   const ask = useCallback(

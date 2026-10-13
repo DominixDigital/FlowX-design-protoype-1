@@ -12,6 +12,7 @@ const env = (globalThis as { process?: { env: Record<string, string | undefined>
 const MODEL = env.GEMINI_MODEL || 'gemini-3.8-flash';
 // Optional second model, tried when the first is overloaded (503) or unavailable (404).
 const FALLBACK = env.GEMINI_FALLBACK_MODEL || '';
+const TIMEOUT_MS = 6000; // a slow model is skipped quickly so a live demo never hangs
 const MAX_QUESTION = 400;
 const MAX_FACTS = 40;
 const MAX_FACT_LEN = 300;
@@ -29,7 +30,7 @@ const RULES = `You are "dit", the companion inside ditdit, a sports-academy app.
 - If the facts do not contain the answer, say so plainly and suggest asking the coach. Never invent scores, ratings, speeds, dates, names or results.
 - Never calculate or change a Dit Score. You may explain facts that are given.
 - Coaches are the source of truth. You do not decide anything about an athlete.
-- Keep it short: one or two sentences, then at most 3 short points.
+- Be quick and brief: ONE or TWO short sentences (under 40 words in total), then at most 2 very short points. No greeting padding, no repeating the question. Do not deliberate; answer directly from the facts.
 - Audience "athlete": the athlete is a child. Warm, plain words, no ranking or comparison with other children, no pressure.
 - Audience "parent": plain words, no cricket jargon without a short explanation, no comparison with other children.
 - Audience "coach": concise and practical.
@@ -60,14 +61,20 @@ export async function POST(request: Request): Promise<Response> {
   const prompt = `AUDIENCE: ${audience}\nFACTS:\n${facts.map((f, i) => `${i + 1}. ${f}`).join('\n') || '(none)'}\n\nQUESTION: ${question}`;
 
   let r = await callGemini(key, prompt);
-  // Google sometimes answers 500/503 "high demand" for a few seconds: one short retry usually gets through.
-  if (!r.ok && (r.status === 503 || r.status === 500)) {
-    await new Promise((done) => setTimeout(done, 900));
-    r = await callGemini(key, prompt);
-  }
-  if (!r.ok && FALLBACK && FALLBACK !== MODEL && [500, 503, 404].includes(r.status)) r = await callGemini(key, prompt, FALLBACK);
+  // The thinking setting is model-specific: if Google rejects it (400), ask again without it.
+  if (!r.ok && r.status === 400) r = await callGemini(key, prompt, MODEL, false);
+  // Busy or slow (500/503/timeout): go straight to the fallback model instead of waiting; with no fallback, retry once.
+  if (!r.ok && [500, 503, 504].includes(r.status)) {
+    if (FALLBACK && FALLBACK !== MODEL) {
+      r = await callGemini(key, prompt, FALLBACK);
+      if (!r.ok && r.status === 400) r = await callGemini(key, prompt, FALLBACK, false);
+    } else {
+      await new Promise((done) => setTimeout(done, 600));
+      r = await callGemini(key, prompt);
+    }
+  } else if (!r.ok && r.status === 404 && FALLBACK && FALLBACK !== MODEL) r = await callGemini(key, prompt, FALLBACK);
   if (!r.ok) {
-    const reason = r.status === 429 ? 'quota' : r.status === 503 ? 'busy' : 'upstream';
+    const reason = r.status === 429 ? 'quota' : r.status === 503 || r.status === 504 ? 'busy' : 'upstream';
     return json(r.status === 429 ? 429 : 502, { ok: false, reason, detail: r.detail });
   }
   try {
@@ -83,19 +90,28 @@ export async function POST(request: Request): Promise<Response> {
 type GeminiReply = { ok: true; text: string } | { ok: false; status: number; detail: string };
 
 /** One call to Gemini. Errors carry Google's own message (never the key) so failures are diagnosable. */
-async function callGemini(key: string, prompt: string, model: string = MODEL): Promise<GeminiReply> {
+/** Fast answers: no thinking on 2.5 models, lowest level on newer ones (they reject the 2.5 setting). */
+function thinking(model: string, low: boolean) {
+  if (!low) return {};
+  if (model.startsWith('gemini-2.5')) return { thinkingConfig: { thinkingBudget: 0 } };
+  if (model.startsWith('gemini-3')) return { thinkingConfig: { thinkingLevel: 'low' } };
+  return {};
+}
+
+async function callGemini(key: string, prompt: string, model: string = MODEL, lowThinking = true): Promise<GeminiReply> {
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: RULES }] },
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.3,
+          temperature: 0.2,
           // Thinking tokens count against this limit, so leave headroom. 2.5 models can switch thinking off; newer ones use a different setting, so don't send one.
-          maxOutputTokens: 2048,
-          ...(model.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          maxOutputTokens: 512,
+          ...thinking(model, lowThinking),
           responseMimeType: 'application/json',
           responseSchema: {
             type: 'OBJECT',
@@ -119,7 +135,7 @@ async function callGemini(key: string, prompt: string, model: string = MODEL): P
     if (!text) return { ok: false, status: 502, detail: `no text (finishReason ${data.candidates?.[0]?.finishReason ?? 'none'}, block ${data.promptFeedback?.blockReason ?? 'none'})` };
     return { ok: true, text };
   } catch {
-    return { ok: false, status: 502, detail: 'could not reach Google' };
+    return { ok: false, status: 504, detail: 'timed out or could not reach Google' };
   }
 }
 
@@ -139,6 +155,8 @@ export async function GET(request: Request): Promise<Response> {
     }
   }
   if (!configured || q.get('probe') !== '1') return json(200, { ok: true, configured, model: MODEL, fallback: FALLBACK || null });
+  const t0 = Date.now();
   const r = await callGemini(env.GEMINI_API_KEY as string, 'AUDIENCE: coach\nFACTS:\n1. Test fact.\n\nQUESTION: Say OK.');
-  return json(200, { ok: true, configured, model: MODEL, probe: r.ok ? { ok: true, sample: r.text.slice(0, 120) } : { ok: false, status: r.status, detail: r.detail } });
+  const ms = Date.now() - t0;
+  return json(200, { ok: true, configured, model: MODEL, fallback: FALLBACK || null, probe: r.ok ? { ok: true, ms, sample: r.text.slice(0, 120) } : { ok: false, ms, status: r.status, detail: r.detail } });
 }
