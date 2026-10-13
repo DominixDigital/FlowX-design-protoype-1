@@ -263,6 +263,18 @@
   white-space: nowrap;
 }
 .table td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.table td:first-child { white-space: nowrap; }
+@media (max-width: 1080px) { .table th, .table td { padding-left: 8px; padding-right: 8px; } }
+
+/* Scrollable wrappers show a soft edge where more content sits off-screen */
+.scroll-shadow {
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, transparent) right / 24px 100% no-repeat local,
+    linear-gradient(to right, rgba(0,0,0,.12), transparent) left / 10px 100% no-repeat scroll,
+    linear-gradient(to left, rgba(0,0,0,.12), transparent) right / 10px 100% no-repeat scroll,
+    var(--surface);
+}
 .table tr:hover td { background: var(--surface-2); }
 .table a { font-weight: 620; text-decoration: none; }
 .table a:hover { text-decoration: underline; }
@@ -385,7 +397,10 @@
 @media (max-width: 1000px) { .launch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .launch-grid { grid-template-columns: 1fr; } .launch-inner { padding: 24px 16px 80px; } }
 
-@media (max-width: 760px) {
+@media (max-width: 1080px) {
+  .w-top { flex-wrap: wrap; padding-left: var(--s-4); padding-right: var(--s-4); }
+  .w-top > .ctx-switch:first-child { flex: 0 1 190px; min-width: 0; }
+  .w-top > .ctx-switch:first-child .strong { overflow: hidden; text-overflow: ellipsis; }
   .w-top > .grow { flex-basis: 100%; order: 3; max-width: none !important; }
 }
 @media (max-width: 860px) {
@@ -404,3 +419,17 @@
 .flows-list button:hover { border-color: var(--grey-500); }
 .flows-list b { font-family: var(--font-display); font-size: 1.4rem; width: 22px; color: var(--grey-500); }
 @media (max-width: 900px) { .launch-hero { grid-template-columns: 1fr; } }
+
+.w-top .ctx-switch { white-space: nowrap; }
+@media (max-width: 760px) {
+  /* Nav is a horizontal scroller: fade the right edge so clipped items read as scrollable */
+  .w-side nav { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+}
+@media (max-width: 860px) {
+  /* The web shell has no bottom tab bar, so the prototype button sits in the corner instead of floating over content */
+  body:has(.w-shell) .proto-btn { bottom: 12px; }
+  body:has(.w-shell) .proto-panel { bottom: 56px; }
+}
+
+/* Keep the sidebar footer link clear of the fixed prototype button */
+.w-side .side-foot { padding-bottom: 52px !important; }

@@ -176,12 +176,13 @@ export function Field({
   );
 }
 
-export function Metric({ label, value, basis, accent }: { label: string; value: ReactNode; basis: string; accent?: boolean }) {
+export function Metric({ label, value, basis, accent, code }: { label: string; value: ReactNode; basis: string; accent?: boolean; code?: string }) {
   return (
     <div className="metric" style={accent ? { background: 'var(--hl)', borderColor: 'var(--hl)', color: 'var(--char-700)' } : undefined}>
       <span className="metric-label">{label}</span>
       <span className="num">{value}</span>
-      <span className="metric-basis" style={accent ? { color: 'var(--char-400)' } : undefined}>{basis}</span>
+      <span className="metric-basis" style={accent ? { color: 'var(--char-700)' } : undefined}>{basis}</span>
+      {code && <span className="flow-code" style={accent ? { color: 'var(--char-700)' } : undefined}>{code}</span>}
     </div>
   );
 }

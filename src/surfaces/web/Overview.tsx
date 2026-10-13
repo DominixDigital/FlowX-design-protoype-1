@@ -41,16 +41,16 @@ export function Overview() {
       <PageHead title={`Good afternoon, ${w.person.name.split(' ')[0]}`} sub={day} codes="MW06.01" />
 
       <section className="w-grid w-grid-4" aria-label="Academy overview">
-        <Link to="/web/athletes" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Active athletes" value={active.length} basis={`${db.batches.filter((b) => b.status === 'active').length} active batches · MW06.02`} /></Link>
-        <Link to="/web/staff" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Coaching staff" value={coaches.length} basis="active coaches and assistants · MW06.03" /></Link>
-        <Link to="/web/reassessments" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Reassessments open" value={pendingR.length} basis={`${pendingR.filter((r) => r.status === 'submitted').length} waiting for your approval · MW06.05`} accent={pendingR.some((r) => r.status === 'submitted')} /></Link>
-        <Link to="/web/tasks" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Open coach tasks" value={openTasks.length} basis={`${openTasks.filter((t) => t.status === 'blocked').length} blocked · MW06.06`} /></Link>
+        <Link to="/web/athletes" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Active athletes" value={active.length} basis={`${db.batches.filter((b) => b.status === 'active').length} active batches`} code="MW06.02" /></Link>
+        <Link to="/web/staff" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Coaching staff" value={coaches.length} basis="active coaches and assistants" code="MW06.03" /></Link>
+        <Link to="/web/reassessments" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Reassessments open" value={pendingR.length} basis={`${pendingR.filter((r) => r.status === 'submitted').length} waiting for your approval`} code="MW06.05" accent={pendingR.some((r) => r.status === 'submitted')} /></Link>
+        <Link to="/web/tasks" className="card-link" style={{ textDecoration: 'none' }}><Metric label="Open coach tasks" value={openTasks.length} basis={`${openTasks.filter((t) => t.status === 'blocked').length} blocked`} code="MW06.06" /></Link>
       </section>
 
       <div className="w-split" style={{ marginTop: 32 }}>
         <section aria-labelledby="att-h">
           <div className="section-head">
-            <h2 id="att-h" className="h2 row gap-2"><AlertTriangle size={20} color="var(--warn)" /> Needs attention</h2>
+            <h2 id="att-h" className="h3 row gap-2"><AlertTriangle size={18} color="var(--warn)" aria-hidden /> Needs attention</h2>
             <FlowCode codes="MW06.04" />
           </div>
           {attention.length === 0 ? <StateBlock kind="empty" title="Nothing needs attention" body="Overdue reassessments, blocked tasks, low attendance and possible duplicates show up here." /> : (
@@ -71,12 +71,12 @@ export function Overview() {
           )}
 
           <div className="section-head" style={{ marginTop: 32 }}>
-            <h2 className="h2">Coaches</h2>
+            <h2 className="h3">Coaches</h2>
             <FlowCode codes="MW06.03" />
           </div>
-          <div className="card card-flush" style={{ overflowX: 'auto' }}>
+          <div className="card card-flush scroll-shadow" style={{ overflowX: 'auto' }}>
             <table className="table">
-              <thead><tr><th>Coach</th><th>Primary athletes</th><th>Open tasks</th><th>Reassessments</th><th>Status</th></tr></thead>
+              <thead><tr><th>Coach</th><th title="Primary athletes">Athletes</th><th>Open tasks</th><th>Reassessments</th><th>Status</th></tr></thead>
               <tbody>
                 {db.coaches.filter((c) => c.academyId === w.academy.id).map((c) => (
                   <tr key={c.id}>

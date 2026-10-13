@@ -374,7 +374,7 @@
 
 /* ── ditdit presence and conversation objects ── */
 .companion-name { font-family: var(--font-body); font-weight: 750; font-size: 1.35rem; letter-spacing: -0.02em; line-height: 1; }
-.seam-btn { border-radius: 999px; padding: 0 14px 0 4px; height: 40px; }
+.seam-btn { border-radius: 999px; padding: 0 14px 0 4px; height: 40px; white-space: nowrap; flex: none; }
 .seam-fab { width: auto; height: 52px; padding: 0 6px; border-radius: 26px; }
 .obj-say { display: flex; gap: 10px; align-items: flex-start; }
 .obj-say p { font-size: 1.05rem; line-height: 1.45; color: var(--text); font-weight: 520; }
