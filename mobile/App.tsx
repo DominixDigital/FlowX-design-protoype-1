@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Platform, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { StoreProvider } from 'ditcore/store/store';
 import { initPlatform } from './src/platform';
 import { Root } from './src/navigation/Root';
-import { raw } from './src/theme/tokens';
+import { fonts, PHONE_MAX, raw } from './src/theme/tokens';
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -29,11 +29,29 @@ export default function App() {
   if (!giveUp && (!ready || !(fontsLoaded || fontError))) {
     return <View style={{ flex: 1, backgroundColor: raw.char[700], alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={raw.grey[500]} /></View>;
   }
-  return (
+  const app = (
     <SafeAreaProvider>
       <StoreProvider>
         <Root />
       </StoreProvider>
     </SafeAreaProvider>
+  );
+  return <PhoneFrame>{app}</PhoneFrame>;
+}
+
+/** On a wide browser window, show the app as a phone-width column instead of stretching it across the screen. */
+function PhoneFrame({ children }: { children: ReactNode }) {
+  const { width } = useWindowDimensions();
+  if (Platform.OS !== 'web' || width <= PHONE_MAX + 80) return <>{children}</>;
+  return (
+    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center', backgroundColor: raw.char[800] }}>
+      <View style={{ width: PHONE_MAX, flexShrink: 0, height: '100%', overflow: 'hidden', borderLeftWidth: 1, borderRightWidth: 1, borderColor: raw.char[500] }}>{children}</View>
+      {width > PHONE_MAX + 420 ? (
+        <View style={{ position: 'absolute', left: 32, bottom: 32, maxWidth: (width - PHONE_MAX) / 2 - 64 }}>
+          <Text style={{ color: raw.grey[600], fontFamily: fonts.bodySemi, fontSize: 13 }}>ditdit · native app preview</Text>
+          <Text style={{ color: raw.grey[700], fontFamily: fonts.body, fontSize: 12, marginTop: 4 }}>The Expo app running in a browser at phone width. Open it on a phone with Expo Go for the real feel.</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }

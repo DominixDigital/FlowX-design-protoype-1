@@ -12,6 +12,11 @@ export type Role = 'coach' | 'parent' | 'athlete';
 export type Mode = 'chalk' | 'floodlit' | 'matchday';
 
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64 } as const;
+/** Widest the app gets on the web: wider windows show it as a phone-sized column. */
+export const PHONE_MAX = 440;
+/** Bottom sheets render in a portal on the web, so they need the same cap. */
+export const sheetFrame = { width: '100%', maxWidth: PHONE_MAX, alignSelf: 'center' } as const;
+
 export const radius = { xs: 4, sm: 8, md: 12, lg: 20, xl: 28 } as const;
 export const fs = { xs: 12, sm: 14, md: 16, lg: 18, xl: 22, '2xl': 28, '3xl': 40, '4xl': 56 } as const;
 

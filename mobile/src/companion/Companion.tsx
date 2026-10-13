@@ -11,7 +11,7 @@ import {
 import { askGemini } from 'ditcore/companion/gemini';
 import { computeDitScore } from 'ditcore/score/ditScore';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
-import { fonts, fs, radius, raw, space } from '../theme/tokens';
+import { fonts, fs, radius, raw, sheetFrame, space } from '../theme/tokens';
 import { Button, Card, Chip, Input, Row, Stack, Txt } from '../ui';
 import { DitAvatar, type DitState } from '../ui/Dit';
 import { ScoreDiscs, ScoreTrend } from '../ui/score';
@@ -239,7 +239,7 @@ export function CompanionCanvas() {
         <CanvasBody>
           <Pressable accessibilityLabel="Close dit" style={{ flex: 1 }} onPress={close} />
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View style={{ backgroundColor: raw.char[700], borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, maxHeight: '100%', paddingBottom: insets.bottom + 8, borderWidth: 1, borderColor: raw.char[400] }}>
+            <View style={{ ...sheetFrame, backgroundColor: raw.char[700], borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, maxHeight: '100%', paddingBottom: insets.bottom + 8, borderWidth: 1, borderColor: raw.char[400] }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: space[4], paddingBottom: space[2] }}>
                 <DitAvatar state={h.seam === 'thinking' ? 'thinking' : moodOf(latest)} size={40} form="face" />
                 <View style={{ flex: 1 }}>
@@ -675,7 +675,7 @@ export function CompanionIntro({ surface }: { surface: Surface }) {
     <Modal visible transparent animationType="slide" statusBarTranslucent onRequestClose={() => set({ introSeen: true })}>
       <ThemeProvider role={role} mode="floodlit">
         <CanvasBody>
-          <View style={{ backgroundColor: raw.char[700], borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space[5], paddingBottom: insets.bottom + space[5], gap: space[4], borderWidth: 1, borderColor: raw.char[400] }}>
+          <View style={{ ...sheetFrame, backgroundColor: raw.char[700], borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space[5], paddingBottom: insets.bottom + space[5], gap: space[4], borderWidth: 1, borderColor: raw.char[400] }}>
             <View style={{ alignItems: 'center' }}><DitAvatar state="idle" form="immersive" size={110} /></View>
             <Text accessibilityRole="header" style={{ color: raw.grey[50], fontFamily: fonts.bodyBold, fontSize: fs.xl }}>{c.hi}</Text>
             <Bullets items={c.does} />

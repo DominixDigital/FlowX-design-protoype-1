@@ -8,7 +8,7 @@ import {
   AlertTriangle, Archive, Ban, BookOpen, CalendarCheck, Check, CircleDashed, CloudOff, Eye, FileClock, FileText, Flag, Info, Lock, RefreshCw, Trophy, Video as VideoIcon, X,
 } from 'lucide-react-native';
 import { useTheme } from '../theme/ThemeProvider';
-import { fonts, fs, radius, space } from '../theme/tokens';
+import { fonts, fs, radius, sheetFrame, space } from '../theme/tokens';
 import { useStore } from 'ditcore/store/store';
 import { fmtDate, initials, type TimelineItem } from 'ditcore/store/selectors';
 import { assumptions } from 'ditcore/data/policy';
@@ -234,7 +234,7 @@ export function Sheet({ visible, onClose, children, dark }: { visible: boolean; 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <Pressable accessibilityLabel="Close" style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' }} onPress={onClose} />
-      <View style={{ backgroundColor: dark ? '#1a1819' : t.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingBottom: insets.bottom + space[4], maxHeight: '88%' }}>
+      <View style={{ ...sheetFrame, backgroundColor: dark ? '#1a1819' : t.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, paddingBottom: insets.bottom + space[4], maxHeight: '88%' }}>
         <View style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: t.line, marginTop: 10 }} />
         {children}
       </View>

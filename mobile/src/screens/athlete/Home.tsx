@@ -11,7 +11,7 @@ import { Button, Card, Chip, Display, Row, Screen, Stack, StatusBadge, Txt } fro
 import { DitAvatar } from '../../ui/Dit';
 import { ScoreDiscs } from '../../ui/score';
 import { CompanionNudge, useCompanion, useCompanionContext } from '../../companion/Companion';
-import { fonts, radius, raw, space } from '../../theme/tokens';
+import { fonts, radius, raw, sheetFrame, space } from '../../theme/tokens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AthleteTop, WeekDots } from './parts';
 import { useAthlete } from './hooks';
@@ -149,7 +149,7 @@ function MilestoneCelebration({ milestoneId }: { milestoneId: string }) {
     <Modal transparent animationType="slide" statusBarTranslucent visible onRequestClose={() => done()}>
       <ThemeProvider role="athlete" mode="floodlit">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: raw.char[700], borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space[5], paddingBottom: insets.bottom + space[5], gap: space[4], alignItems: 'center', borderWidth: 1, borderColor: raw.char[400] }}>
+          <View style={{ ...sheetFrame, backgroundColor: raw.char[700], borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: space[5], paddingBottom: insets.bottom + space[5], gap: space[4], alignItems: 'center', borderWidth: 1, borderColor: raw.char[400] }}>
             <DitAvatar state="celebrating" form="face" size={72} />
             <Txt variant="xs" strong muted style={{ textAlign: 'center' }}>Milestone · confirmed by {coachById(db, area?.ownerId ?? 'c-rohan')?.name ?? 'your coach'} · {fmtDate(m.date)}</Txt>
             <Display size={36} style={{ textAlign: 'center' }}>{m.title}</Display>
