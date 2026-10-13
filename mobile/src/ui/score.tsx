@@ -57,7 +57,7 @@ export function ScoreDiscs({ state, size = 280 }: { state: ScoreState; size?: nu
       </Svg>
       <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0, height: size * 0.79 * (208 / 222), alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ fontSize: 11, letterSpacing: 0.7, color: t.textMuted, fontFamily: fonts.bodySemi, marginBottom: 2 }}>Dit Score</Text>
-        <Text style={{ fontFamily: fonts.display, fontSize: size * 0.27, lineHeight: size * 0.25, color: t.text, fontVariant: ['tabular-nums'] }}>{state.value}</Text>
+        <Text style={{ fontFamily: fonts.display, fontSize: size * 0.27, lineHeight: size * 0.29, color: t.text, fontVariant: ['tabular-nums'] }}>{state.value}</Text>
       </View>
     </View>
   );

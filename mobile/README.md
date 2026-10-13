@@ -65,6 +65,7 @@ needing a native module. Please try it in Expo Go and report what is off.
 - Video: recording and picking need `expo-camera` / `expo-image-picker` (native). Capture uses the demo clip.
 - The floating dit face is hidden on the attendance screen (it covered the absent buttons); a small face in the
   header opens it instead.
-- `@expo-google-fonts/big-shoulders-display` is marked deprecated upstream (the family left Google Fonts) but still
-  ships the font files; self-host them if that package is removed.
+- Fonts (Big Shoulders Display, Instrument Sans; SIL Open Font License) are bundled from `assets/fonts`, not from
+  `node_modules`: static hosts such as Vercel refuse to serve `node_modules` paths, which left the web preview on
+  system fonts. `npm run export:web` also moves any other vendor assets out of `node_modules` paths.
 - Flow codes (MW06.04 and similar) are dropped from the mobile UI; assumptions that affect behaviour are kept.
