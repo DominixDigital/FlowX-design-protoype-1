@@ -65,7 +65,7 @@ Every themed subtree re-resolves its own colours, so any component works in any 
   2. Every object can show what it is "Based on N records".
   3. Nothing is saved without a confirm action.
   4. Saved AI-assisted records carry "AI-drafted, coach-confirmed".
-  5. The canvas permanently says no AI service is connected.
+  5. The canvas permanently says which answers are demo logic and which (open questions only) may come from an AI model, and labels the latter.
 - **Voice:**
   - It uses real speech recognition where the browser has it, with a live transcript and a stop control.
   - Error states offer "Use what was heard" and "Type instead".

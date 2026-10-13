@@ -300,7 +300,7 @@ export function CompanionCanvas({ variant }: { variant: 'sheet' | 'panel' }) {
         <div className="companion-scroll" ref={scrollRef}>
           <div className="companion-demo">
             <FlaskConical size={14} aria-hidden style={{ flex: 'none', marginTop: 1 }} />
-            <span>Demo logic: no AI service is connected. dit reads only records shown in this prototype, follows your coach’s approved information, and you confirm anything it would change.</span>
+            <span>Most answers are demo logic over the records in this prototype. Open questions can be answered by an AI model (Gemini) and are labelled. dit follows your coach’s approved information, and you confirm anything it would change.</span>
           </div>
 
           {plays.length === 0 && (

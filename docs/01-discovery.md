@@ -84,7 +84,7 @@ Trust rules for every dit (companion) object:
 - Consequential actions go through a **Proposed action** card with Confirm / Edit / Dismiss.
 - AI-assisted records carry an "AI-drafted, coach-confirmed" mark in their history.
 
-**Prototype honesty:** no language model is connected. dit (companion) responses come from deterministic templates over the fixture records, and every one is labelled *Demo logic — no AI service connected*. Voice uses the browser's Web Speech API where it exists. Elsewhere it falls back to typing, plus a clearly labelled sample voice note.
+**Prototype honesty:** dit (companion) responses come from deterministic templates over the fixture records and are labelled as demo logic. Only open free-text questions can go to an optional Gemini function (`api/chat.ts`), and those answers carry an *AI-generated* label. Voice uses the browser's Web Speech API where it exists. Elsewhere it falls back to typing, plus a clearly labelled sample voice note.
 
 ## Visual directions explored
 

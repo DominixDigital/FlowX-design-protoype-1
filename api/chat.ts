@@ -3,12 +3,13 @@
  * The browser sends a question plus a small, role-filtered set of facts; this
  * function adds the rules, calls Gemini and returns a short structured answer.
  *
- * Env: GEMINI_API_KEY (required), GEMINI_MODEL (optional, default gemini-2.5-flash).
+ * Env: GEMINI_API_KEY (required), GEMINI_MODEL (optional, default gemini-3.8-flash).
  */
 
 // Read env without @types/node so the file compiles on its own wherever Vercel builds it.
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
-const MODEL = env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Google closed gemini-2.5-flash to new users and points them at this model; override with GEMINI_MODEL.
+const MODEL = env.GEMINI_MODEL || 'gemini-3.8-flash';
 const MAX_QUESTION = 400;
 const MAX_FACTS = 40;
 const MAX_FACT_LEN = 300;
@@ -81,9 +82,9 @@ async function callGemini(key: string, prompt: string): Promise<GeminiReply> {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.3,
-          // 2.5 models "think" before answering and thinking tokens count against this limit: switch it off and leave headroom.
-          maxOutputTokens: 1024,
-          thinkingConfig: { thinkingBudget: 0 },
+          // Thinking tokens count against this limit, so leave headroom. 2.5 models can switch thinking off; newer ones use a different setting, so don't send one.
+          maxOutputTokens: 2048,
+          ...(MODEL.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           responseMimeType: 'application/json',
           responseSchema: {
             type: 'OBJECT',
