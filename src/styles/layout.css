@@ -368,7 +368,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 300px;
   padding: 20px;
   border-radius: var(--r-lg);
   border: 1px solid var(--char-400);
@@ -379,13 +378,16 @@
   transition: border-color var(--t-base), transform var(--t-base) var(--ease-out);
 }
 .surface-card:hover { border-color: var(--hl); transform: translateY(-2px); }
-.surface-card .persona-list { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+.surface-card .persona-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+/* Reserve three lines for the blurb so the sign-in lists start at the same height across a row */
+@media (min-width: 1001px) { .surface-card .surface-who { min-height: 4.5em; } }
 .surface-card .persona-list button {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 8px 10px;
+  min-height: 44px;
+  padding: 8px 12px;
   border-radius: var(--r-sm);
   border: 1px solid var(--char-400);
   background: transparent;
@@ -411,14 +413,18 @@
 
 /* ditdit launcher */
 .launch-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 40px; align-items: center; }
-.launch-score { display: grid; gap: 12px; justify-items: center; padding: 24px; border-radius: var(--r-xl); background: var(--char-500); border: 1px solid var(--char-400); }
+.launch-score { display: grid; gap: 12px; justify-items: center; width: 100%; max-width: 460px; justify-self: end; padding: 24px; border-radius: var(--r-xl); background: var(--char-500); border: 1px solid var(--char-400); }
 .surface-card .role-swatch { position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--hl); }
 .launch-flows { margin-top: 48px; }
-.flows-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
-.flows-list button { width: 100%; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--char-400); background: var(--char-600); color: var(--grey-50); text-align: left; font-size: var(--fs-sm); font-weight: 600; }
+.flows-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+/* Tiles grow to fill the last row, so seven journeys never leave a ragged gap */
+.flows-list li { flex: 1 1 260px; display: flex; }
+.flows-list button { width: 100%; display: flex; gap: 12px; align-items: center; min-height: 52px; padding: 12px 14px; border-radius: var(--r-md); border: 1px solid var(--char-400); background: var(--char-600); color: var(--grey-50); text-align: left; font-size: var(--fs-sm); font-weight: 600; }
 .flows-list button:hover { border-color: var(--grey-500); }
 .flows-list b { font-family: var(--font-display); font-size: 1.4rem; width: 22px; color: var(--grey-500); }
-@media (max-width: 900px) { .launch-hero { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .launch-hero { grid-template-columns: minmax(0, 1fr); gap: 28px; } .launch-score { justify-self: start; } }
+@media (max-width: 600px) { .launch-score { padding: 16px; } }
+.launch .sd-label { fill: var(--grey-500); font-size: 12.5px; }
 
 .w-top .ctx-switch { white-space: nowrap; }
 @media (max-width: 760px) {
@@ -427,8 +433,8 @@
 }
 @media (max-width: 860px) {
   /* The web shell has no bottom tab bar, so the prototype button sits in the corner instead of floating over content */
-  body:has(.w-shell) .proto-btn { bottom: 12px; }
-  body:has(.w-shell) .proto-panel { bottom: 56px; }
+  body:has(.w-shell) .proto-btn, body:has(.launch) .proto-btn { bottom: 12px; }
+  body:has(.w-shell) .proto-panel, body:has(.launch) .proto-panel { bottom: 56px; }
 }
 
 /* Keep the sidebar footer link clear of the fixed prototype button */

@@ -38,7 +38,7 @@ export function Launcher() {
   return (
     <main className="launch" id="main" tabIndex={-1} data-theme="floodlit" data-role="athlete">
       <div className="launch-inner">
-        <header className="row between wrap gap-4" style={{ marginBottom: 48 }}>
+        <header className="row between wrap gap-4" style={{ marginBottom: 40 }}>
           <Wordmark size={34} />
           <nav className="row gap-2">
             <Link to="/explore" className="btn btn-sm" style={{ background: 'transparent', color: 'var(--grey-50)', borderColor: 'var(--char-300)' }}>
@@ -49,7 +49,7 @@ export function Launcher() {
 
         <section className="launch-hero">
           <div>
-            <h1 className="display" style={{ fontSize: 'clamp(3rem, 8vw, 6.5rem)' }}>What’s your<br />Dit Score?</h1>
+            <h1 className="display" style={{ fontSize: 'clamp(2.75rem, 7vw, 5.75rem)' }}>What’s your<br />Dit Score?</h1>
             <p style={{ marginTop: 20, maxWidth: '50ch', color: 'var(--grey-500)', fontSize: 'var(--fs-lg)' }}>
               ditdit turns everyday coaching into a development story athletes understand. Coaches stay the source of truth, ditdit keeps the record, and dit, the companion, explains it.
             </p>
@@ -64,7 +64,7 @@ export function Launcher() {
               <DitAvatar state="insight" form="face" size={36} />
               <p className="small" style={{ color: 'var(--grey-500)', maxWidth: '30ch' }}>“Your score went up since last week. Want to see why?”</p>
             </div>
-            <p className="xs" style={{ color: 'var(--grey-700)', textAlign: 'center' }}>Tara’s illustrative score, calculated from prototype records</p>
+            <p className="xs" style={{ color: 'var(--grey-600)', textAlign: 'center' }}>Tara’s illustrative score, calculated from prototype records</p>
           </div>
         </section>
 
@@ -75,7 +75,7 @@ export function Launcher() {
               <span className="role-swatch" aria-hidden />
               <span style={{ color: 'var(--hl)' }}>{s.icon}</span>
               <h3 className="h2">{s.name}</h3>
-              <p className="small" style={{ color: 'var(--grey-500)' }}>{s.who}</p>
+              <p className="small surface-who" style={{ color: 'var(--grey-500)' }}>{s.who}</p>
               <div className="persona-list" role="group" aria-label={`Sign in to ${s.name} as`}>
                 {s.personas.map((p) => (
                   <button key={p.id} onClick={() => go(s.surface, p.id, p.academy)}>
@@ -101,7 +101,7 @@ export function Launcher() {
           </ol>
         </section>
 
-        <p className="xs" style={{ marginTop: 24, color: 'var(--grey-700)', maxWidth: '72ch' }}>
+        <p className="xs" style={{ marginTop: 32, color: 'var(--grey-600)', maxWidth: '72ch' }}>
           A prototype with fixture data for Velocity Cricket Academy. All four apps share one store. dit uses demo logic, not an AI model. The Dit Score uses an illustrative method that still has to be validated with coaches and sports experts.
           Prototype controls (bottom-left) simulate offline, failures and conflicts.
         </p>
