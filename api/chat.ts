@@ -10,6 +10,8 @@
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env ?? {};
 // Google closed gemini-2.5-flash to new users and points them at this model; override with GEMINI_MODEL.
 const MODEL = env.GEMINI_MODEL || 'gemini-3.8-flash';
+// Optional second model, tried when the first is overloaded (503) or unavailable (404).
+const FALLBACK = env.GEMINI_FALLBACK_MODEL || '';
 const MAX_QUESTION = 400;
 const MAX_FACTS = 40;
 const MAX_FACT_LEN = 300;
@@ -63,6 +65,7 @@ export async function POST(request: Request): Promise<Response> {
     await new Promise((done) => setTimeout(done, 900));
     r = await callGemini(key, prompt);
   }
+  if (!r.ok && FALLBACK && FALLBACK !== MODEL && [500, 503, 404].includes(r.status)) r = await callGemini(key, prompt, FALLBACK);
   if (!r.ok) {
     const reason = r.status === 429 ? 'quota' : r.status === 503 ? 'busy' : 'upstream';
     return json(r.status === 429 ? 429 : 502, { ok: false, reason, detail: r.detail });
@@ -80,9 +83,9 @@ export async function POST(request: Request): Promise<Response> {
 type GeminiReply = { ok: true; text: string } | { ok: false; status: number; detail: string };
 
 /** One call to Gemini. Errors carry Google's own message (never the key) so failures are diagnosable. */
-async function callGemini(key: string, prompt: string): Promise<GeminiReply> {
+async function callGemini(key: string, prompt: string, model: string = MODEL): Promise<GeminiReply> {
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
@@ -92,7 +95,7 @@ async function callGemini(key: string, prompt: string): Promise<GeminiReply> {
           temperature: 0.3,
           // Thinking tokens count against this limit, so leave headroom. 2.5 models can switch thinking off; newer ones use a different setting, so don't send one.
           maxOutputTokens: 2048,
-          ...(MODEL.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          ...(model.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           responseMimeType: 'application/json',
           responseSchema: {
             type: 'OBJECT',
@@ -123,7 +126,19 @@ async function callGemini(key: string, prompt: string): Promise<GeminiReply> {
 /** GET shows config. GET ?probe=1 makes one tiny live call and reports Google's real status (no key, no user data). */
 export async function GET(request: Request): Promise<Response> {
   const configured = Boolean(env.GEMINI_API_KEY);
-  if (!configured || new URL(request.url).searchParams.get('probe') !== '1') return json(200, { ok: true, configured, model: MODEL });
+  const q = new URL(request.url).searchParams;
+  if (configured && q.get('models') === '1') {
+    try {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': env.GEMINI_API_KEY as string } });
+      if (!res.ok) return json(200, { ok: true, models: null, detail: `Google ${res.status}` });
+      const data = (await res.json()) as { models?: { name: string; supportedGenerationMethods?: string[] }[] };
+      const names = (data.models ?? []).filter((m) => m.supportedGenerationMethods?.includes('generateContent')).map((m) => m.name.replace('models/', ''));
+      return json(200, { ok: true, model: MODEL, fallback: FALLBACK || null, models: names });
+    } catch {
+      return json(200, { ok: true, models: null, detail: 'could not reach Google' });
+    }
+  }
+  if (!configured || q.get('probe') !== '1') return json(200, { ok: true, configured, model: MODEL, fallback: FALLBACK || null });
   const r = await callGemini(env.GEMINI_API_KEY as string, 'AUDIENCE: coach\nFACTS:\n1. Test fact.\n\nQUESTION: Say OK.');
   return json(200, { ok: true, configured, model: MODEL, probe: r.ok ? { ok: true, sample: r.text.slice(0, 120) } : { ok: false, status: r.status, detail: r.detail } });
 }
