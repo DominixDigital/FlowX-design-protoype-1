@@ -2,14 +2,15 @@ import type { DB } from '../store/store';
 import { ageOn, athleteById, attendanceFor, currentFocus } from '../store/selectors';
 import { computeDitScore } from '../score/ditScore';
 import type { CompanionCtx, CompanionObject } from './engine';
+import { getApiBase, getKV } from '../core/platform';
 
 const FLAG = 'ditdit-gemini';
 
 export const geminiEnabled = () => {
-  try { return localStorage.getItem(FLAG) !== 'off'; } catch { return true; }
+  try { return getKV().get(FLAG) !== 'off'; } catch { return true; }
 };
 export const setGeminiEnabled = (on: boolean) => {
-  try { localStorage.setItem(FLAG, on ? 'on' : 'off'); } catch { /* storage unavailable */ }
+  try { getKV().set(FLAG, on ? 'on' : 'off'); } catch { /* storage unavailable */ }
 };
 
 /**
@@ -50,7 +51,7 @@ export type GeminiResult =
 export async function askGemini(db: DB, ctx: CompanionCtx, question: string): Promise<GeminiResult> {
   if (!geminiEnabled()) return { ok: false, reason: 'off' };
   try {
-    const res = await fetch('/api/chat', {
+    const res = await fetch(`${getApiBase()}/api/chat`, {
       method: 'POST',
       signal: AbortSignal.timeout(12000),
       headers: { 'content-type': 'application/json' },

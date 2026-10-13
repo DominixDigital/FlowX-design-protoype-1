@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as fx from '../data/fixtures';
 import type { AuditEntry, ID, QueuedCommand, Surface } from '../data/types';
+import { getKV } from '../core/platform';
 
 export interface DB {
   academies: typeof fx.academies;
@@ -70,11 +71,11 @@ const defaultPersonas: Record<Surface, Persona> = {
   athlete: { personId: 'p-tara', academyId: 'ac-velocity' },
 };
 
-const STORAGE_KEY = 'ditdit-proto-v2';
+export const STORAGE_KEY = 'ditdit-proto-v2';
 
 function load<T>(key: string, fallback: T): T {
   try {
-    const raw = localStorage.getItem(`${STORAGE_KEY}:${key}`);
+    const raw = getKV().get(`${STORAGE_KEY}:${key}`);
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -83,7 +84,7 @@ function load<T>(key: string, fallback: T): T {
 
 function save(key: string, value: unknown) {
   try {
-    localStorage.setItem(`${STORAGE_KEY}:${key}`, JSON.stringify(value));
+    getKV().set(`${STORAGE_KEY}:${key}`, JSON.stringify(value));
   } catch {
     /* storage unavailable: prototype keeps working in memory */
   }

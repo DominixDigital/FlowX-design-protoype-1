@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "ditdit",
+    "slug": "ditdit",
+    "scheme": "ditdit",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#1a1819",
+    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#1a1819" },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "co.dominix.ditdit" },
+    "android": {
+      "package": "co.dominix.ditdit",
+      "adaptiveIcon": {
+        "backgroundColor": "#1a1819",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": { "favicon": "./assets/favicon.png", "bundler": "metro" }
+  }
+}

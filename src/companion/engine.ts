@@ -455,3 +455,87 @@ export const ROLE_GREETING: Record<Who, string> = {
 export function isUnmatched(objs: CompanionObject[]): boolean {
   return objs.length > 0 && objs[0].type === 'notice' && /could not match|Open an athlete/.test(objs[0].text);
 }
+
+/**
+ * One router for every client (web and native). Chips and clear requests use the rules; typed sentences the rules
+ * can't match, that push back ("not the…") or ask about data dit doesn't hold go to the model first.
+ * `objects` is always the rule-based answer, kept as the fallback if the model is off, busy or fails.
+ */
+export function route(db: DB, ctx: CompanionCtx, q: string, via: 'text' | 'voice' | 'prompt'): { objects: CompanionObject[]; useModel: boolean; matched: boolean } {
+  const s = q.toLowerCase();
+  const done = (objects: CompanionObject[]) => ({ objects, useModel: false, matched: true });
+  if (s.startsWith('brief me') && ctx.reassessmentId) return done(evidenceBrief(db, ctx.reassessmentId));
+  if (s.startsWith('draft') && ctx.athleteId) return done([draftReportComment(db, ctx.athleteId)]);
+  if (s.startsWith('explain this report') && ctx.reportId) {
+    const r = db.reports.find((x) => x.id === ctx.reportId);
+    return done(r ? [explainReport(db, r)] : []);
+  }
+  if (s.startsWith('explain') && ctx.videoId) {
+    const v = db.videos.find((x) => x.id === ctx.videoId);
+    const c = v?.comments.find((x) => x.shared);
+    return done(c ? [explainMoment(db, v!.id, c.t)] : []);
+  }
+  if (s.startsWith('summarise') && ctx.athleteId) return done(recentSummary(db, ctx.athleteId));
+  if (s.startsWith('compare') && ctx.athleteId) return done([compareSessions(db, ctx.athleteId)]);
+  if (s.startsWith('what can')) return done([capabilities(ctx)]);
+  const dd = ditdit(db, ctx, q);
+  const rules = dd ?? answer(db, ctx, q);
+  const matched = dd !== null || !isUnmatched(rules);
+  const pushback = via !== 'prompt' && /\b(not|no|never|wrong|instead|bro|runs?|wickets?|overs?)\b|n't/i.test(q);
+  return { objects: rules, matched, useModel: !matched || pushback };
+}
+
+export const COMPANION_INTRO: Record<'athlete' | 'parent' | 'coach' | 'web', { hi: string; does: string[]; doesnt: string; try: string[] }> = {
+  athlete: {
+    hi: 'Hi, I’m dit.',
+    does: ['Walk you through your sessions and feedback', 'Explain your Dit Score and what moved it', 'Turn your coach’s comments into practice tips'],
+    doesnt: 'I don’t replace your coach. I only use what your coach has approved, and I’ll say when I’m not sure.',
+    try: ['What’s my Dit Score?', 'How was my session?'],
+  },
+  parent: {
+    hi: 'Hello, I’m dit.',
+    does: ['Explain reports and cricket terms in plain words', 'Help you read the Dit Score and what the coach is prioritising'],
+    doesnt: 'I only explain what the academy has shared with you. Coaching decisions stay with the coach.',
+    try: ['What does the Dit Score mean?', 'Explain this report in plain words'],
+  },
+  coach: {
+    hi: 'dit — your assistant on the sideline.',
+    does: ['Turn voice notes into observations you approve', 'Summarise athletes and brief you before reassessments', 'Draft athlete-friendly feedback for you to sign off'],
+    doesnt: 'Nothing is saved or shared until you approve it. You stay the source of truth.',
+    try: ['Summarise recent sessions', 'What can you help with?'],
+  },
+  web: {
+    hi: 'dit — summaries and drafts, on request.',
+    does: ['Brief you on reassessment evidence', 'Draft parent-friendly report comments', 'Summarise an athlete’s history'],
+    doesnt: 'dit works inside your permissions and never publishes anything for you.',
+    try: ['What can you help with?'],
+  },
+};
+
+/** Opening line under the greeting, by screen. */
+export function introLine(ctx: CompanionCtx) {
+  if (ctx.surface === 'athlete') return ctx.sessionId ? 'Want to go through your session?' : 'What do you want to know?';
+  if (ctx.surface === 'parent') return 'Anything you’d like explained?';
+  if (ctx.reassessmentId) return 'Want the evidence before you decide?';
+  if (ctx.reportId) return 'Anything in this report unclear?';
+  if (ctx.videoId) return 'Want the coach’s point unpacked?';
+  if (ctx.surface === 'coach') return 'Talk a note, or ask about this athlete.';
+  return 'What do you need from these records?';
+}
+
+/** Turns an internal coach note into a second-person draft for the athlete. Template logic, labelled as a draft. */
+export function athleteFriendly(note: string, name: string) {
+  const first = name.split(' ')[0];
+  let t = note
+    .replace(new RegExp(`\\b${first}\\b[,:]?\\s*`, 'gi'), '')
+    .replace(/\b[Hh]e's\b|\b[Ss]he's\b/g, 'you’re')
+    .replace(/\b[Hh]e\b|\b[Ss]he\b/g, 'you')
+    .replace(/\b[Hh]is\b|\b[Hh]er\b/g, 'your')
+    .replace(/\b[Hh]im\b/g, 'you')
+    .replace(/\byou reaches\b/g, 'you reach').replace(/\byou falls\b/g, 'you fall').replace(/\byou plays\b/g, 'you play').replace(/\byou gets\b/g, 'you get')
+    .replace(/\bStill\b/g, 'You still')
+    .trim();
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  const lead = tone(note) === 'concern' ? 'One thing to work on: ' : 'Nice work today. ';
+  return `${lead}${t}`;
+}

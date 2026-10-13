@@ -9,8 +9,7 @@ import { Clip } from '../components/art';
 import type { SeamState } from '../components/Seam';
 import { Button } from '../components/ui';
 import {
-  answer, capabilities, evidenceBrief, draftReportComment, explainReport, explainMoment, recentSummary, compareSessions,
-  interpretVoiceNote, SAMPLE_VOICE_NOTES, ditdit, ROLE_GREETING, tone, isUnmatched, type CompanionCtx, type CompanionObject,
+  interpretVoiceNote, SAMPLE_VOICE_NOTES, ROLE_GREETING, route, COMPANION_INTRO, introLine, athleteFriendly, type CompanionCtx, type CompanionObject,
 } from './engine';
 import { useSpeech } from './useSpeech';
 import { askGemini } from './gemini';
@@ -86,36 +85,14 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
     (q: string, via: Play['via'] = 'text') => {
       if (!ctx) return;
       run(q, via, () => {
-        const d = dbRef.current;
-        const s = q.toLowerCase();
-        // Prompt chips map straight to known objects; free text goes through the router.
-        if (s.startsWith('brief me') && ctx.reassessmentId) return { objects: evidenceBrief(d, ctx.reassessmentId) };
-        if (s.startsWith('draft') && ctx.athleteId) return { objects: [draftReportComment(d, ctx.athleteId)] };
-        if (s.startsWith('explain this report') && ctx.reportId) {
-          const r = d.reports.find((x) => x.id === ctx.reportId);
-          return { objects: r ? [explainReport(d, r)] : [] };
-        }
-        if (s.startsWith('explain') && ctx.videoId) {
-          const v = d.videos.find((x) => x.id === ctx.videoId);
-          const c = v?.comments.find((x) => x.shared);
-          return { objects: c ? [explainMoment(d, v!.id, c.t)] : [] };
-        }
-        if (s.startsWith('summarise') && ctx.athleteId) return { objects: recentSummary(d, ctx.athleteId) };
-        if (s.startsWith('compare') && ctx.athleteId) return { objects: [compareSessions(d, ctx.athleteId)] };
-        if (s.startsWith('what can')) return { objects: [capabilities(ctx)] };
-        const dd = ditdit(d, ctx, q);
-        const rules = dd ?? answer(d, ctx, q);
-        const matched = dd !== null || !isUnmatched(rules);
-        // Chips and clear requests use the rules. Typed sentences the rules can't match, or that push back ("not the…") or ask about data dit doesn't hold (runs, wickets), go to Gemini first,
-        // so "not the dit score" never gets a score card just because the words appear. Any Gemini failure falls back to the rules.
-        const conversational = via !== 'prompt' && /\b(not|no|never|wrong|instead|bro|runs?|wickets?|overs?)\b|n't/i.test(q);
-        if (matched && !conversational) return { objects: rules };
+        const r = route(dbRef.current, ctx, q, via);
+        if (!r.useModel) return { objects: r.objects };
         return {
-          objects: rules,
+          objects: r.objects,
           then: async () => {
-            const r = await askGemini(dbRef.current, ctx, q);
-            if (r.ok) return r.objects;
-            if (r.reason === 'rate' && !matched) return [{ type: 'notice', tone: 'info', text: 'The AI service is busy right now. Showing what dit can do without it.' } as CompanionObject, ...rules.slice(1)];
+            const g = await askGemini(dbRef.current, ctx, q);
+            if (g.ok) return g.objects;
+            if (g.reason === 'rate' && !r.matched) return [{ type: 'notice', tone: 'info', text: 'The AI service is busy right now. Showing what dit can do without it.' } as CompanionObject, ...r.objects.slice(1)];
             return null;
           },
         };
@@ -308,7 +285,7 @@ export function CompanionCanvas({ variant }: { variant: 'sheet' | 'panel' }) {
 
           {plays.length === 0 && (
             <div className="play" style={{ borderTop: 0 }}>
-              <p className="play-ask"><small>{ROLE_GREETING[ctx.surface === 'athlete' ? 'athlete' : ctx.surface === 'parent' ? 'parent' : 'coach']}</small>{intro(ctx)}</p>
+              <p className="play-ask"><small>{ROLE_GREETING[ctx.surface === 'athlete' ? 'athlete' : ctx.surface === 'parent' ? 'parent' : 'coach']}</small>{introLine(ctx)}</p>
             </div>
           )}
 
@@ -424,16 +401,6 @@ function moodOf(p?: Play): DitState {
   if (say?.mood) return say.mood;
   if (p.objects.some((o) => o.type === 'notice')) return 'uncertain';
   return 'explaining';
-}
-
-function intro(ctx: CompanionCtx) {
-  if (ctx.surface === 'athlete') return ctx.sessionId ? 'Want to go through your session?' : 'What do you want to know?';
-  if (ctx.surface === 'parent') return 'Anything you’d like explained?';
-  if (ctx.reassessmentId) return 'Want the evidence before you decide?';
-  if (ctx.reportId) return 'Anything in this report unclear?';
-  if (ctx.videoId) return 'Want the coach’s point unpacked?';
-  if (ctx.surface === 'coach') return 'Talk a note, or ask about this athlete.';
-  return 'What do you need from these records?';
 }
 
 /* ───────────────────────── Objects ───────────────────────── */
@@ -795,32 +762,7 @@ function Choices({ options }: { options: { label: string; ask?: string; to?: str
   );
 }
 
-const INTRO: Record<'athlete' | 'parent' | 'coach' | 'web', { hi: string; does: string[]; doesnt: string; try: string[] }> = {
-  athlete: {
-    hi: 'Hi, I’m dit.',
-    does: ['Walk you through your sessions and feedback', 'Explain your Dit Score and what moved it', 'Turn your coach’s comments into practice tips'],
-    doesnt: 'I don’t replace your coach. I only use what your coach has approved, and I’ll say when I’m not sure.',
-    try: ['What’s my Dit Score?', 'How was my session?'],
-  },
-  parent: {
-    hi: 'Hello, I’m dit.',
-    does: ['Explain reports and cricket terms in plain words', 'Help you read the Dit Score and what the coach is prioritising'],
-    doesnt: 'I only explain what the academy has shared with you. Coaching decisions stay with the coach.',
-    try: ['What does the Dit Score mean?', 'Explain this report in plain words'],
-  },
-  coach: {
-    hi: 'dit — your assistant on the sideline.',
-    does: ['Turn voice notes into observations you approve', 'Summarise athletes and brief you before reassessments', 'Draft athlete-friendly feedback for you to sign off'],
-    doesnt: 'Nothing is saved or shared until you approve it. You stay the source of truth.',
-    try: ['Summarise recent sessions', 'What can you help with?'],
-  },
-  web: {
-    hi: 'dit — summaries and drafts, on request.',
-    does: ['Brief you on reassessment evidence', 'Draft parent-friendly report comments', 'Summarise an athlete’s history'],
-    doesnt: 'dit works inside your permissions and never publishes anything for you.',
-    try: ['What can you help with?'],
-  },
-};
+const INTRO = COMPANION_INTRO;
 
 /** Flow A — first interaction: purpose, limits, a first question, and an easy way out. */
 export function CompanionIntro({ surface, fixed = false }: { surface: 'athlete' | 'parent' | 'coach' | 'web'; fixed?: boolean }) {
@@ -850,23 +792,6 @@ export function CompanionIntro({ surface, fixed = false }: { surface: 'athlete' 
       </section>
     </>
   );
-}
-
-/** Turns an internal coach note into a second-person draft for the athlete. Template logic, labelled as a draft. */
-export function athleteFriendly(note: string, name: string) {
-  const first = name.split(' ')[0];
-  let t = note
-    .replace(new RegExp(`\\b${first}\\b[,:]?\\s*`, 'gi'), '')
-    .replace(/\b[Hh]e's\b|\b[Ss]he's\b/g, 'you’re')
-    .replace(/\b[Hh]e\b|\b[Ss]he\b/g, 'you')
-    .replace(/\b[Hh]is\b|\b[Hh]er\b/g, 'your')
-    .replace(/\b[Hh]im\b/g, 'you')
-    .replace(/\byou reaches\b/g, 'you reach').replace(/\byou falls\b/g, 'you fall').replace(/\byou plays\b/g, 'you play').replace(/\byou gets\b/g, 'you get')
-    .replace(/\bStill\b/g, 'You still')
-    .trim();
-  t = t.charAt(0).toUpperCase() + t.slice(1);
-  const lead = tone(note) === 'concern' ? 'One thing to work on: ' : 'Nice work today. ';
-  return `${lead}${t}`;
 }
 
 /** Flow E — coach approves an athlete-friendly version before anything reaches the athlete. */
