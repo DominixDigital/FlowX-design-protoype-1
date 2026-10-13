@@ -57,8 +57,9 @@ export async function askGemini(db: DB, ctx: CompanionCtx, question: string): Pr
     });
     const ct = res.headers.get('content-type') || '';
     if (!ct.includes('json')) return { ok: false, reason: 'unavailable' }; // no function (local dev)
-    const data = (await res.json()) as { ok: boolean; reason?: string; model?: string; answer?: string; points?: string[]; used?: string[] };
+    const data = (await res.json()) as { ok: boolean; reason?: string; model?: string; detail?: string; answer?: string; points?: string[]; used?: string[] };
     if (!data.ok || !data.answer) {
+      if (data.detail) console.warn('[dit] Gemini unavailable:', data.detail);
       if (data.reason === 'not_configured') return { ok: false, reason: 'not_configured' };
       if (data.reason === 'quota' || data.reason === 'slow_down' || data.reason === 'daily_cap') return { ok: false, reason: 'rate' };
       return { ok: false, reason: 'unavailable' };

@@ -56,6 +56,22 @@ export async function POST(request: Request): Promise<Response> {
   dayCount += 1;
   const prompt = `AUDIENCE: ${audience}\nFACTS:\n${facts.map((f, i) => `${i + 1}. ${f}`).join('\n') || '(none)'}\n\nQUESTION: ${question}`;
 
+  const r = await callGemini(key, prompt);
+  if (!r.ok) return json(r.status === 429 ? 429 : 502, { ok: false, reason: r.status === 429 ? 'quota' : 'upstream', detail: r.detail });
+  try {
+    const parsed = JSON.parse(r.text) as { answer?: string; points?: string[]; usedFacts?: number[] };
+    if (!parsed.answer) return json(502, { ok: false, reason: 'empty', detail: 'no answer field' });
+    const used = (parsed.usedFacts || []).filter((n) => Number.isInteger(n) && n >= 1 && n <= facts.length).map((n) => facts[n - 1]);
+    return json(200, { ok: true, model: MODEL, answer: parsed.answer.slice(0, 600), points: (parsed.points || []).slice(0, 3).map((p) => String(p).slice(0, 200)), used });
+  } catch {
+    return json(502, { ok: false, reason: 'empty', detail: 'reply was not valid JSON' });
+  }
+}
+
+type GeminiReply = { ok: true; text: string } | { ok: false; status: number; detail: string };
+
+/** One call to Gemini. Errors carry Google's own message (never the key) so failures are diagnosable. */
+async function callGemini(key: string, prompt: string): Promise<GeminiReply> {
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(MODEL)}:generateContent`, {
       method: 'POST',
@@ -65,7 +81,9 @@ export async function POST(request: Request): Promise<Response> {
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.3,
-          maxOutputTokens: 400,
+          // 2.5 models "think" before answering and thinking tokens count against this limit: switch it off and leave headroom.
+          maxOutputTokens: 1024,
+          thinkingConfig: { thinkingBudget: 0 },
           responseMimeType: 'application/json',
           responseSchema: {
             type: 'OBJECT',
@@ -79,20 +97,24 @@ export async function POST(request: Request): Promise<Response> {
         },
       }),
     });
-    if (res.status === 429) return json(429, { ok: false, reason: 'quota' });
-    if (!res.ok) return json(502, { ok: false, reason: 'upstream' });
-    const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!raw) return json(502, { ok: false, reason: 'empty' });
-    const parsed = JSON.parse(raw) as { answer?: string; points?: string[]; usedFacts?: number[] };
-    if (!parsed.answer) return json(502, { ok: false, reason: 'empty' });
-    const used = (parsed.usedFacts || []).filter((n) => Number.isInteger(n) && n >= 1 && n <= facts.length).map((n) => facts[n - 1]);
-    return json(200, { ok: true, model: MODEL, answer: parsed.answer.slice(0, 600), points: (parsed.points || []).slice(0, 3).map((p) => String(p).slice(0, 200)), used });
+    if (!res.ok) {
+      let msg = '';
+      try { msg = ((await res.json()) as { error?: { message?: string } }).error?.message ?? ''; } catch { /* non-JSON error body */ }
+      return { ok: false, status: res.status, detail: `Google ${res.status}: ${msg.slice(0, 200)}` };
+    }
+    const data = (await res.json()) as { candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[]; promptFeedback?: { blockReason?: string } };
+    const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('');
+    if (!text) return { ok: false, status: 502, detail: `no text (finishReason ${data.candidates?.[0]?.finishReason ?? 'none'}, block ${data.promptFeedback?.blockReason ?? 'none'})` };
+    return { ok: true, text };
   } catch {
-    return json(502, { ok: false, reason: 'upstream' });
+    return { ok: false, status: 502, detail: 'could not reach Google' };
   }
 }
 
-export function GET(): Response {
-  return json(200, { ok: true, configured: Boolean(env.GEMINI_API_KEY), model: MODEL });
+/** GET shows config. GET ?probe=1 makes one tiny live call and reports Google's real status (no key, no user data). */
+export async function GET(request: Request): Promise<Response> {
+  const configured = Boolean(env.GEMINI_API_KEY);
+  if (!configured || new URL(request.url).searchParams.get('probe') !== '1') return json(200, { ok: true, configured, model: MODEL });
+  const r = await callGemini(env.GEMINI_API_KEY as string, 'AUDIENCE: coach\nFACTS:\n1. Test fact.\n\nQUESTION: Say OK.');
+  return json(200, { ok: true, configured, model: MODEL, probe: r.ok ? { ok: true, sample: r.text.slice(0, 120) } : { ok: false, status: r.status, detail: r.detail } });
 }
