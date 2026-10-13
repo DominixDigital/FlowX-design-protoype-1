@@ -51,6 +51,7 @@ node scripts/e2e.mjs http://127.0.0.1:5173   # cross-surface journey check (need
   - The network, the media server (upload and processing progress) and notification delivery.
   - Sign-in and account creation.
   - dit responses. These are deterministic logic over the fixture records, and the UI says so. No AI model is connected.
+- **Gemini (optional):** when the rule-based dit has no answer for a free-text question, `api/chat.ts` (a Vercel function) asks Gemini. It sees only a few role-filtered facts from the screen (no other athletes, no unpublished feedback, no private scores) and the answer is labelled "AI-generated". Without `GEMINI_API_KEY`, or when rate-limited, dit falls back to the built-in answer. Set `GEMINI_API_KEY` (and optionally `GEMINI_MODEL`) in Vercel project settings; `npm run dev` has no `/api`, so use `vercel dev` to try it locally. The Dit Score is never calculated by the model.
 - **Not shown:** performance telemetry such as speeds or ratings. Every number on screen comes from a recorded attendance, note, goal or practice log. The Dit Score combines those records with an illustrative, unvalidated method, and is labelled that way.
 
 ## Stack

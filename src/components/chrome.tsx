@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { Check, CloudOff, AlertTriangle, RefreshCw, SlidersHorizontal, X, ChevronLeft } from 'lucide-react';
 import { useStore } from '../store/store';
 import type { Surface } from '../data/types';
+import { geminiEnabled, setGeminiEnabled } from '../companion/gemini';
 
 /** ditdit wordmark: the tittles of the two i's are the brand's two dots (Morse "dit dit"). */
 export function Wordmark({ to = '/', size = 26 }: { to?: string; size?: number }) {
@@ -136,6 +137,7 @@ export function MobileNav({ items }: { items: { to: string; label: string; icon:
 export function ProtoControls() {
   const { sim, setSim, reset, db, update, toast } = useStore();
   const [open, setOpen] = useState(false);
+  const [gem, setGem] = useState(geminiEnabled);
   return (
     <>
       <button className="proto-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="proto-panel" aria-label="Prototype controls">
@@ -152,6 +154,7 @@ export function ProtoControls() {
           <label className="switch">Slow network <input type="checkbox" checked={sim.slow} onChange={(e) => setSim({ slow: e.target.checked })} /></label>
           <label className="switch">Fail the next save <input type="checkbox" checked={sim.failNextSave} onChange={(e) => setSim({ failNextSave: e.target.checked })} /></label>
           <label className="switch">Lose the next confirmation <input type="checkbox" checked={sim.uncertainNext} onChange={(e) => setSim({ uncertainNext: e.target.checked })} /></label>
+          <label className="switch">Gemini for open questions <input type="checkbox" checked={gem} onChange={(e) => { setGem(e.target.checked); setGeminiEnabled(e.target.checked); }} /></label>
           <label className="switch">Conflict on next attendance sync <input type="checkbox" checked={sim.conflictOnSync} onChange={(e) => setSim({ conflictOnSync: e.target.checked })} /></label>
           <hr className="divider" style={{ margin: '8px 0' }} />
           <p className="xs strong" style={{ margin: '8px 0 4px' }}>Server-side events</p>

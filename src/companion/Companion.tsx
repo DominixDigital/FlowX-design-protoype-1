@@ -10,9 +10,10 @@ import type { SeamState } from '../components/Seam';
 import { Button } from '../components/ui';
 import {
   answer, capabilities, evidenceBrief, draftReportComment, explainReport, explainMoment, recentSummary, compareSessions,
-  interpretVoiceNote, SAMPLE_VOICE_NOTES, ditdit, ROLE_GREETING, tone, type CompanionCtx, type CompanionObject,
+  interpretVoiceNote, SAMPLE_VOICE_NOTES, ditdit, ROLE_GREETING, tone, isUnmatched, type CompanionCtx, type CompanionObject,
 } from './engine';
 import { useSpeech } from './useSpeech';
+import { askGemini } from './gemini';
 
 export interface CompanionActions {
   /** Insert drafted text into the host form (e.g. report comment, reassessment note) */
@@ -69,11 +70,16 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
     setPlays([]); // new screen context → fresh canvas
   }, []);
 
-  const run = useCallback((q: string, via: Play['via'], produce: () => Partial<Play>) => {
+  const run = useCallback((q: string, via: Play['via'], produce: () => Partial<Play> & { then?: () => Promise<CompanionObject[] | null> }) => {
     const id = uid('play');
     setPlays((p) => [...p, { id, ask: q, via, status: 'thinking', objects: [] }]);
     // A short, honest "working" beat: demo logic is local and instant.
-    setTimeout(() => setPlays((p) => p.map((x) => (x.id === id ? { ...x, status: 'done', ...produce() } : x))), 650);
+    setTimeout(() => {
+      const { then, ...out } = produce();
+      if (!then) { setPlays((p) => p.map((x) => (x.id === id ? { ...x, status: 'done', ...out } : x))); return; }
+      // Rule router had no answer: try Gemini; keep dit "thinking" until it replies, fall back to the rule-based notice on any failure.
+      then().then((ai) => setPlays((p) => p.map((x) => (x.id === id ? { ...x, status: 'done', ...out, objects: ai ?? out.objects ?? [] } : x))));
+    }, 650);
   }, []);
 
   const ask = useCallback(
@@ -99,7 +105,17 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
         if (s.startsWith('what can')) return { objects: [capabilities(ctx)] };
         const dd = ditdit(d, ctx, q);
         if (dd) return { objects: dd };
-        return { objects: answer(d, ctx, q) };
+        const fallback = answer(d, ctx, q);
+        if (!isUnmatched(fallback)) return { objects: fallback };
+        return {
+          objects: fallback,
+          then: async () => {
+            const r = await askGemini(dbRef.current, ctx, q);
+            if (r.ok) return r.objects;
+            if (r.reason === 'rate') return [{ type: 'notice', tone: 'info', text: 'The AI service is busy right now. Showing what dit can do without it.' } as CompanionObject, ...fallback.slice(1)];
+            return null;
+          },
+        };
       });
     },
     [ctx, run],
@@ -531,6 +547,16 @@ function ObjectView({ o }: { o: CompanionObject }) {
           <ul className="small" style={{ margin: 0, paddingLeft: 18, color: 'var(--grey-50)', display: 'grid', gap: 4 }}>
             {o.items.map((x) => <li key={x}>{x}</li>)}
           </ul>
+        </div>
+      );
+    case 'ai':
+      return (
+        <div className="obj">
+          <div className="obj-title">Answer<span className="tag-suggestion">AI-generated · {o.model}</span></div>
+          <p className="small" style={{ color: 'var(--grey-50)' }}>{o.text}</p>
+          {o.points.length > 0 && <ul className="small" style={{ margin: '8px 0 0', paddingLeft: 18, color: 'var(--grey-50)', display: 'grid', gap: 4 }}>{o.points.map((x) => <li key={x}>{x}</li>)}</ul>}
+          {o.basis.length > 0 && <Basis items={o.basis} />}
+          <p className="xs muted" style={{ marginTop: 8 }}>Written by an AI model from the records on this screen. Your coach is the source of truth.</p>
         </div>
       );
     case 'notice':
