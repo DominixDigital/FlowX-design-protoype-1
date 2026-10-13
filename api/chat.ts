@@ -57,8 +57,16 @@ export async function POST(request: Request): Promise<Response> {
   dayCount += 1;
   const prompt = `AUDIENCE: ${audience}\nFACTS:\n${facts.map((f, i) => `${i + 1}. ${f}`).join('\n') || '(none)'}\n\nQUESTION: ${question}`;
 
-  const r = await callGemini(key, prompt);
-  if (!r.ok) return json(r.status === 429 ? 429 : 502, { ok: false, reason: r.status === 429 ? 'quota' : 'upstream', detail: r.detail });
+  let r = await callGemini(key, prompt);
+  // Google sometimes answers 500/503 "high demand" for a few seconds: one short retry usually gets through.
+  if (!r.ok && (r.status === 503 || r.status === 500)) {
+    await new Promise((done) => setTimeout(done, 900));
+    r = await callGemini(key, prompt);
+  }
+  if (!r.ok) {
+    const reason = r.status === 429 ? 'quota' : r.status === 503 ? 'busy' : 'upstream';
+    return json(r.status === 429 ? 429 : 502, { ok: false, reason, detail: r.detail });
+  }
   try {
     const parsed = JSON.parse(r.text) as { answer?: string; points?: string[]; usedFacts?: number[] };
     if (!parsed.answer) return json(502, { ok: false, reason: 'empty', detail: 'no answer field' });
