@@ -422,7 +422,7 @@ export function ditdit(db: DB, ctx: CompanionCtx, q: string): CompanionObject[] 
   const s = q.toLowerCase();
   const athleteId = ctx.athleteId;
   if (/counts? towards|what counts|how is .*score|method/.test(s)) return scoreMethod();
-  if (athleteId && /dit score|score/.test(s)) {
+  if (athleteId && /\bdit ?score\b|\b(my|the|your|his|her) score\b/.test(s)) {
     if (/why|change/.test(s)) return explainScore(db, ctx, athleteId, 'why');
     if (/improve|go up|better/.test(s)) return explainScore(db, ctx, athleteId, 'improve');
     return explainScore(db, ctx, athleteId, 'what');

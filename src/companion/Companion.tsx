@@ -104,15 +104,18 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
         if (s.startsWith('compare') && ctx.athleteId) return { objects: [compareSessions(d, ctx.athleteId)] };
         if (s.startsWith('what can')) return { objects: [capabilities(ctx)] };
         const dd = ditdit(d, ctx, q);
-        if (dd) return { objects: dd };
-        const fallback = answer(d, ctx, q);
-        if (!isUnmatched(fallback)) return { objects: fallback };
+        const rules = dd ?? answer(d, ctx, q);
+        const matched = dd !== null || !isUnmatched(rules);
+        // Chips and clear requests use the rules. Typed sentences the rules can't match, or that push back ("not the…") or ask about data dit doesn't hold (runs, wickets), go to Gemini first,
+        // so "not the dit score" never gets a score card just because the words appear. Any Gemini failure falls back to the rules.
+        const conversational = via !== 'prompt' && /\b(not|no|never|wrong|instead|bro|runs?|wickets?|overs?)\b|n't/i.test(q);
+        if (matched && !conversational) return { objects: rules };
         return {
-          objects: fallback,
+          objects: rules,
           then: async () => {
             const r = await askGemini(dbRef.current, ctx, q);
             if (r.ok) return r.objects;
-            if (r.reason === 'rate') return [{ type: 'notice', tone: 'info', text: 'The AI service is busy right now. Showing what dit can do without it.' } as CompanionObject, ...fallback.slice(1)];
+            if (r.reason === 'rate' && !matched) return [{ type: 'notice', tone: 'info', text: 'The AI service is busy right now. Showing what dit can do without it.' } as CompanionObject, ...rules.slice(1)];
             return null;
           },
         };
