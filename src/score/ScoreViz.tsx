@@ -130,10 +130,14 @@ export function ScoreTrend({ db, athleteId, height = 120 }: { db: DB; athleteId:
           <g key={p.date}>
             <text x={x(i)} y={H - 6} textAnchor="middle" className="st-axis">{fmtDate(p.date)}</text>
             {p.value !== null && (
-              <circle
-                cx={x(i)} cy={y(p.value)} r={hover === i ? 6 : 4.5} className="st-pt" tabIndex={0}
-                onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}
-              />
+              <>
+                <circle cx={x(i)} cy={y(p.value)} r={hover === i ? 6 : 4.5} className="st-pt" aria-hidden />
+                <circle
+                  cx={x(i)} cy={y(p.value)} r={16} className="st-hit" tabIndex={0} role="img"
+                  aria-label={`Week of ${fmtDate(p.date)}: ${p.value}`}
+                  onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(i)} onBlur={() => setHover(null)}
+                />
+              </>
             )}
             {p.value === null && <circle cx={x(i)} cy={H - pad.b} r="2.5" className="st-none" />}
           </g>

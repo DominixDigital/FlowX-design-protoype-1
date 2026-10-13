@@ -111,7 +111,7 @@
   border-radius: var(--r-md);
   padding: var(--s-4);
 }
-.card-flush { padding: 0; overflow: hidden; }
+.card-flush { padding: 0; overflow: hidden; position: relative; }
 .card-sunk { background: var(--surface-2); }
 .card-link {
   display: block;
@@ -241,6 +241,7 @@ a.list-row:hover { background: var(--surface-2); }
 
 /* ───────────────── Tabs ───────────────── */
 .tabs {
+  position: relative;
   display: flex;
   gap: var(--s-1);
   border-bottom: 1px solid var(--line);

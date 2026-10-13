@@ -146,3 +146,7 @@ svg {
     scroll-behavior: auto !important;
   }
 }
+
+/* Standalone small text links: extend the hit area to ~44px tall without changing layout. */
+a.small, a.xs { position: relative; }
+a.small::after, a.xs::after { content: ''; position: absolute; inset: -12px -4px; }

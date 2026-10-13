@@ -53,8 +53,11 @@ button.dit-chip:hover { background: var(--char-400); }
 .st-axis { font: 500 10px var(--font-body); fill: var(--text-muted); }
 .st-pb { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 4 4; }
 .st-line { fill: none; stroke: var(--text); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.st-pt { fill: var(--hl); stroke: var(--surface); stroke-width: 2; cursor: pointer; }
-.st-pt:focus { outline: none; stroke: var(--text); }
+.st-pt { fill: var(--hl); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+/* 32px invisible hit area around each 9px point (touch target + keyboard focus) */
+.st-hit { fill: transparent; stroke: none; cursor: pointer; }
+.st-hit:focus { outline: none; }
+.st-hit:focus-visible { stroke: var(--text); stroke-width: 2; stroke-dasharray: 3 3; }
 .st-none { fill: none; stroke: var(--text-muted); stroke-width: 1; }
 .st-tip { fill: var(--char-500); }
 .st-tip-t { font: 650 11px var(--font-body); fill: var(--paper); }
