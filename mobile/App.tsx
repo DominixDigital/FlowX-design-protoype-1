@@ -11,13 +11,19 @@ import { raw } from './src/theme/tokens';
 
 export default function App() {
   const [ready, setReady] = useState(false);
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     BigShouldersDisplay_900Black, BigShouldersDisplay_700Bold,
     InstrumentSans_400Regular, InstrumentSans_500Medium, InstrumentSans_600SemiBold, InstrumentSans_700Bold,
   });
-  useEffect(() => { initPlatform().finally(() => setReady(true)); }, []);
+  // Never wait forever: storage or fonts that fail or stall must not leave the user on a spinner.
+  const [giveUp, setGiveUp] = useState(false);
+  useEffect(() => {
+    initPlatform().catch(() => {}).finally(() => setReady(true));
+    const timer = setTimeout(() => setGiveUp(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
-  if (!ready || !fontsLoaded) {
+  if (!giveUp && (!ready || !(fontsLoaded || fontError))) {
     return <View style={{ flex: 1, backgroundColor: raw.char[700], alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={raw.grey[500]} /></View>;
   }
   return (
